@@ -31,7 +31,6 @@ GLFWwindow* initialise()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
     // Enable the GLFW runtime error callback function defined previously.
     glfwSetErrorCallback(glfwErrorCallback);
 
@@ -70,22 +69,7 @@ GLFWwindow* initialise()
 
 int main(int argc, char* argb[])
 {
-    printf("\n\nmain test\n\n");
 
-    std::vector<float>  vertices1 = {
-        -0.5, -0.5, 0.0,
-        0.5, -0.5, 0.0,
-        0.0,  0.5, 0.0
-    }; 
-
-    std::vector<int>  vertices2 = {
-        0, 0, 0,
-        0, 0, 0,
-        0, 0, 0
-    }; 
-
-    std::cout << createVAO(vertices1, vertices2);
-    
     // Initialise window using GLFW
     GLFWwindow* window = initialise();
 
