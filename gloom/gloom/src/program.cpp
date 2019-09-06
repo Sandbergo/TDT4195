@@ -6,11 +6,11 @@
 
 void runProgram(GLFWwindow* window)
 {
+    // setup Shader
     Gloom::Shader shader;
     shader.attach("../gloom/shaders/simple.vert");
     shader.attach("../gloom/shaders/simple.frag");
     shader.link();
-    
 
     // Enable depth (Z) buffer (accept "closest" fragment)
     glEnable(GL_DEPTH_TEST);
@@ -24,40 +24,25 @@ void runProgram(GLFWwindow* window)
 
     // Set up your scene here (create Vertex Array Objects, etc.)
     std::vector<float> coordinateVec = {
-        -0.8, -0.8, 0, 
-        -0.4, -0.8, 0,  
-        -0.8, -0.4, 0, 
-   
-        0.8, 0.8, 0, 
-        0.4, 0.8, 0,  
-        0.8, 0.4, 0, 
+        -0.8, -0.8, 0,      -0.4, -0.8, 0,      0.8, -0.4, 0, 
+         
+         0.8, 0.8, 0.0,      0.4, 0.8, 0.0,     0.8, 0.4, 0.0, 
+         
+         0.0, 0.0, 0.0,      1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
 
-        0.0, 0.0, 0.0,
-         1.0, 0.0, 0.0,
-         0.0,  1.0, 0.0,
+        -1.0, 1.0, 0.0,     -1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
 
-         -1.0, 1.0, 0.0,
-         -1.0, 0.0, 0.0,
-         0.0, 1.0, 0.0,
+         0.0, 0.0, 0.0,     -1.0, 0.0, 0.0,     0.0, -1.0, 0.0,
+    };
 
-        0.0, 0.0, 0.0,
-         -1.0, 0.0, 0.0,
-         0.0, -1.0, 0.0,
-
-        
-
+    std::vector<float> coordinateVec2 = {
+        0.6, -0.8, -1.2,     0.0, 0.4, 0,      -0.8, 0.0, 1.2, 
     };
     
-    std::vector<unsigned int> indexVec = { 0, 1, 2,
-                                       3, 4, 5,
-                                       6, 7, 8,
-                                       9, 10, 11,
-                                       12, 13, 14};
+    std::vector<unsigned int> indexVec = 
+    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
 
     int index = setUpVAOtriangle(coordinateVec, indexVec);
-    
-
-    std::cout << "\n\n" << index << "\n\n"; 
     
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
@@ -95,22 +80,22 @@ void handleKeyboardInput(GLFWwindow* window)
 }
 
 
-int setUpVAOtriangle(std::vector<float> vertex_coordinates, std::vector<unsigned int> indexArray){
-    
+int setUpVAOtriangle(std::vector<float> vertex_coordinates, std::vector<unsigned int> indexArray)
+{
+    // setup array
     unsigned int arrayID = 0;
     glGenVertexArrays(1, &arrayID);
     glBindVertexArray(arrayID);
     
+    // vertex buffer
     unsigned int vertexBufferID = 0;
     glGenBuffers(1, &vertexBufferID);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
-    
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertex_coordinates.size(), vertex_coordinates.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE,0,0); // error
-  
+    glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE,0,0); 
     glEnableVertexAttribArray(0);
 
+    // index buffer
     unsigned int indexBufferID = 0;
     glGenBuffers(1, &indexBufferID);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
