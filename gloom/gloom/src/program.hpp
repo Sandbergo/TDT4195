@@ -8,6 +8,7 @@
 #include <glad/glad.h>
 #include <string>
 #include <vector>
+#include <glm/vec3.hpp>
 
 
 // Main OpenGL program
@@ -63,5 +64,6 @@ int setUpVAOtriangle(std::vector<float> vertexCoordinates,
                      std::vector<float> colorArray);
 
 
+void updateMVP();
 
 #endif

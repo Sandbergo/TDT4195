@@ -3,6 +3,15 @@
 #include "gloom/shader.hpp"
 #include "gloom/gloom.hpp"
 #include <iostream>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/vec3.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+// global variables (sorry)
+glm::vec3 motionVec = glm::vec3(1.0f,1.0f,-1.0f);
+glm::vec3 rotationVec = glm::vec3(0.0f,0.0f,0.0f);
 
 void runProgram(GLFWwindow* window)
 {
@@ -24,7 +33,7 @@ void runProgram(GLFWwindow* window)
 
     // Set up your scene here (create Vertex Array Objects, etc.)
     std::vector<float> coordinateVec1 = {
-        -0.8, -0.8, 0,      -0.4, -0.8, 0,      0.8, -0.4, 0.0, 
+        -0.8, -0.8, 0.0,    -0.4, -0.8, 0.0,      0.8, -0.4, 0.0, 
          0.8, 0.8, 0.0,      0.4, 0.8, 0.0,     0.8, 0.4, 0.0, 
          0.0, 0.0, 0.0,      1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
         -1.0, 1.0, 0.0,     -1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
@@ -50,18 +59,28 @@ void runProgram(GLFWwindow* window)
          0.8, 0.8, 0.5,      -0.8, 0.8, 0.5,      0.8, -0.8, 0.5, 
     };
     
-    std::vector<unsigned int> indexVec = 
+    std::vector<unsigned int> indexVecOld = 
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, };
 
+    std::vector<unsigned int> indexVec = 
+    {6,7,8,3,4,5,0,1,2};
+
     std::vector<float> colorVec = {
-        0.2, 0.4, 1.0, 0.7,     0.2, 0.4, 1.0, 0.7,      0.2, 0.4, 1.0, 0.7,
-        1.0, 1.0, 1.0, 0.3,     1.0, 1.0, 1.0, 0.3,      1.0, 1.0, 1.0, 0.3,
         1.0, 0.6, 1.0, 0.2,     1.0, 0.6, 1.0, 0.2,      1.0, 0.6, 1.0, 0.2,
-       
+        0.2, 0.4, 1.0, 0.4,     0.2, 0.4, 1.0, 0.4,      0.2, 0.4, 1.0, 0.4,
+        1.0, 1.0, 1.0, 0.3,     1.0, 1.0, 1.0, 0.3,      1.0, 1.0, 1.0, 0.3,
     };
 
-
     int index = setUpVAOtriangle(coordinateVec, indexVec, colorVec);
+
+
+    glm::mat4 MVPmatrix = glm::mat4(1.0f); 
+
+    glm::mat4x4 perspMatrix = glm::perspective(2.0, 4.0 / 3.0, 1.0, 100.0);
+
+    glm::mat4x4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f,1.0f,-1.0f));
+
+    // define yrotate xrotate
     
     // Rendering Loop
     while (!glfwWindowShouldClose(window))
@@ -76,11 +95,22 @@ void runProgram(GLFWwindow* window)
         // Draw your scene here
         shader.activate();
         printGLError();
+
+        // MVP
+        viewMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0,-1.0));
+        modelMatrix = glm::translate(glm::mat4(1.0f), motionVec);
+        xRotateMatrix = glm::rotate(modelMatrix, rotationVec[0],glm::vec3(1,0,0));
+        yRotateMatrix = glm::rotate(modelMatrix, rotationVec[1],glm::vec3(0,1,0));
+        MVPmatrix = perspMatrix*xRotateMatrix*yRotateMatrix*viewMatrix*modelMatrix;
+
+        int MVPlocation = glGetUniformLocation(shader.get(), "MVPmatrix");
+        glUniformMatrix4fv(MVPlocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
+
+        // Draw scene
         glBindVertexArray(index);
         glDrawElements(GL_TRIANGLES, indexVec.size(), GL_UNSIGNED_INT, 0);
        
-        shader.deactivate();
-
+        updateMVP();
         // Handle other events
         glfwPollEvents();
         handleKeyboardInput(window);
@@ -88,17 +118,69 @@ void runProgram(GLFWwindow* window)
         // Flip buffers
         glfwSwapBuffers(window);
     }
+    shader.deactivate();
     shader.destroy();
 }
 
 
 void handleKeyboardInput(GLFWwindow* window)
 {
+    float speed = 0.1;
+    // GLFW_MOD_CAPS_LOCK 
+    //if( glfwGetKey(window,  GLFW_MOD_CAPS_LOCK ) == GLFW_PRESS){
+    if( glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
 
-    // Use escape key for terminating the GLFW window
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS){
-        glfwSetWindowShouldClose(window, GL_TRUE);
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        {
+            rotationVec[1]+= speed;
+        }
+        // Use bottom arrow to go backward (translation)
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        {
+            rotationVec[1]-= speed;
+        }
+        // Use up arrow to go up (translation)
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        {
+            rotationVec[0]+= speed;
+        }
+        // Use bottom arrow to go backward (translation)
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        {
+            rotationVec[0]-= speed;
+        }
     }
+
+    else {
+
+        // Use left arrow to move to the left the camera (translation)
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
+            motionVec[0]+= speed;
+        }
+
+        // Use right arrow to move to the right the camera (translation)
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
+            motionVec[0]-= speed;
+        }
+        // Use up arrow to go forward (translation)
+        if (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS){
+            motionVec[2]+= speed;
+        }
+        // Use bottom arrow to go backward (translation)
+        if (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS){
+            motionVec[2]-= speed;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
+            motionVec[1]-= speed;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
+            motionVec[1]+= speed;
+        }
+
+    }
+
 }
 
 
@@ -137,4 +219,9 @@ int setUpVAOtriangle(std::vector<float> vertexCoordinates,
 
 
     return arrayID;
+}
+
+void updateMVP() {
+	//glm::mat4 View = glm::translate(-motion)* Rotation* Scale;
+	//MVP = projection * View * Model;
 }
