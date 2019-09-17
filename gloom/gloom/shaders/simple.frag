@@ -1,8 +1,10 @@
 #version 430 core
 
-in vec4 colorV;
+//in flat vec4 colorV;
 
-out vec4 color;
+in layout(location=0) flat vec4 colorV;
+
+out layout(location=0) vec4 color;
 
 void main()
 {
