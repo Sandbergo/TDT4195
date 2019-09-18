@@ -16,13 +16,13 @@ void main()
     //b
     //matrix [0][1] = scaler; 
     //c
-    //matrix [0][2] = scaler;
+    //matrix [0][3] = scaler;
     //d
     //matrix [1][0] = scaler;
     //e
     //matrix [1][1] = scaler;
     //f
-    //matrix [1][2] = scaler;
+    //matrix [1][3] = scaler;
 
     colorV = color;
     //gl_Position = matrix * vec4(position.x, position.y, position.z, 1.0f);
