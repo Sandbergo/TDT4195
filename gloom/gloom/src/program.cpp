@@ -33,7 +33,7 @@ void runProgram(GLFWwindow* window)
     glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
     // Set up your scene here (create Vertex Array Objects, etc.)
-    std::vector<float> coordinateVec = {
+    std::vector<float> coordinateVec2 = {
         -0.8, -0.8, 0.0,    -0.4, -0.8, 0.0,    0.8, -0.4, 0.0, 
          0.8, 0.8, 0.0,      0.4, 0.8, 0.0,     0.8, 0.4, 0.0, 
          0.0, 0.0, 0.0,      1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
@@ -41,10 +41,10 @@ void runProgram(GLFWwindow* window)
          0.0, 0.0, 0.0,     -1.0, 0.0, 0.0,     0.0, -1.0, 0.0,
     };
     
-    std::vector<unsigned int> indexVec = 
+    std::vector<unsigned int> indexVec2 = 
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
 
-    std::vector<float> colorVec = {
+    std::vector<float> colorVec2 = {
         1.0, 0.9, 1.0, 0.6,     0.1, 0.1, 0.1, 0.6,      1.0, 1.0, 0.0, 0.6,
         0.7, 0.6, 1.0, 0.4,     1.0, 1.0, 1.0, 0.4,      1.0, 0.0, 0.6, 0.4,
         1.0, 0.4, 1.0, 0.5,     0.6, 0.4, 1.0, 0.9,      0.7, 0.4, 1.0, 0.5,
@@ -52,22 +52,22 @@ void runProgram(GLFWwindow* window)
         0.6, 0.4, 1.0, 0.8,     0.1, 0.1, 0.1, 0.6,      0.0, 0.4, 0.6, 0.8,
     };
 
-    std::vector<float> coordinateVec2 = {
-         0.0, 0.0, -0.5,      1.0, 0.0, -0.5,     0.0, 1.0, -0.5,
-        -0.8, -0.8, 0.0,      0.8, -0.8, 0.0,     0.0, 0.8, 0.0, 
+    std::vector<float> coordinateVec = {
+         0.0, 0.0, -0.0,      1.0, 0.0, -0.0,     0.0, 1.0, -0.0,
+        -0.8, -0.8, -0.5,     0.8, -0.8, -0.5,    0.0, 0.8, -0.5, 
          0.8, 0.8, 0.5,      -0.8, 0.8, 0.5,      0.8, -0.8, 0.5, 
     };
     
     std::vector<unsigned int> indexVecOld = 
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, };
 
-    std::vector<unsigned int> indexVec2 = 
+    std::vector<unsigned int> indexVec = 
     {6,7,8,3,4,5,0,1,2};
 
-    std::vector<float> colorVec2 = {
-        1.0, 0.6, 1.0, 0.2,     1.0, 0.6, 1.0, 0.2,      1.0, 0.6, 1.0, 0.2,
-        0.2, 0.4, 1.0, 0.4,     0.2, 0.4, 1.0, 0.4,      0.2, 0.4, 1.0, 0.4,
-        1.0, 1.0, 1.0, 0.3,     1.0, 1.0, 1.0, 0.3,      1.0, 1.0, 1.0, 0.3,
+    std::vector<float> colorVec = {
+        0.0, 1.0, 0.0, 0.3,     0.0, 1.0, 0.0, 0.3,      0.0, 1.0, 0.0, 0.3,
+        0.0, 0.0, 1.0, 0.3,     0.0, 0.0, 1.0, 0.3,      0.0, 0.0, 1.0, 0.3,
+        1.0, 0.0, 0.0, 0.3,     1.0, 0.0, 0.0, 0.3,      1.0, 0.0, 0.0, 0.3,
     };
 
     int index = setUpVAOtriangle(coordinateVec, indexVec, colorVec);
@@ -82,7 +82,9 @@ void runProgram(GLFWwindow* window)
     
     // transformation scaling helper 
     float scaler = 0;
+
     // Rendering Loop
+    shader.activate();
     while (!glfwWindowShouldClose(window))
     {
         // Clear colour and depth buffers
@@ -93,7 +95,7 @@ void runProgram(GLFWwindow* window)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Draw your scene here
-        shader.activate();
+        
         printGLError();
 
         // translation scaling helper 
@@ -135,11 +137,11 @@ void handleKeyboardInput(GLFWwindow* window)
         
         // left/right for yaw
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
-            rotationVec[1]+= speed;
+            rotationVec[1]-= speed;
         }
     
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
-            rotationVec[1]-= speed;
+            rotationVec[1]+= speed;
         }
 
         // up/down for pitch
@@ -159,32 +161,41 @@ void handleKeyboardInput(GLFWwindow* window)
     }
 
     else {
-
+        // for task 5 a
+        glm::mat3x3 yRotateMatrix = glm::rotate(rotationVec[1],glm::vec3(0,1,0));
+        glm::mat3x3 xRotateMatrix = glm::rotate(rotationVec[0],glm::vec3(1,0,0));
+        
         // left/right for sideways translation
-        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
-            motionVec[0]+= speed;
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
+            glm::vec3 speedVec = glm::vec3(speed,0.0f,0.0f);
+            motionVec-=speedVec*yRotateMatrix*xRotateMatrix;
         }
 
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
-            motionVec[0]-= speed;
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS){
+            glm::vec3 speedVec = glm::vec3(speed,0.0f,0.0f);
+            motionVec+= speedVec*yRotateMatrix*xRotateMatrix;
         }
 
         // up/down for up/down 
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
-            motionVec[1]-= speed;
+            glm::vec3 speedVec = glm::vec3(0.0f,speed,0.0f);
+            motionVec-= speedVec*yRotateMatrix*xRotateMatrix;
         }
 
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
-            motionVec[1]+= speed;
+            glm::vec3 speedVec = glm::vec3(0.0f,speed,0.0f);
+            motionVec+= speedVec*yRotateMatrix*xRotateMatrix;
         }
 
         // W/S for zooming in/out
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-            motionVec[2]+= speed;
+            glm::vec3 speedVec = glm::vec3(0.0f,0.0f,speed);
+            motionVec+= speedVec*yRotateMatrix*xRotateMatrix;
         }
         
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-            motionVec[2]-= speed;
+            glm::vec3 speedVec = glm::vec3(0.0f,0.0f,speed);
+            motionVec-= speedVec*yRotateMatrix*xRotateMatrix;
         }
     }
 }
