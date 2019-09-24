@@ -2,6 +2,7 @@
 #include "program.hpp"
 #include "gloom/shader.hpp"
 #include "gloom/gloom.hpp"
+#include "OBJLoader.hpp"
 #include "math.h"
 #include <iostream>
 #include <glm/mat4x4.hpp>
@@ -33,6 +34,17 @@ void runProgram(GLFWwindow* window)
     glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
     // Set up your scene here (create Vertex Array Objects, etc.)
+    Mesh terrainMesh = loadTerrainMesh("../gloom/resources/lunarsurface.obj");
+
+    std::vector<float> vertexVec = terrainMesh.vertices;
+    std::vector<float> colorVec = terrainMesh.colours;
+    std::vector<float> normalVec = terrainMesh.normals;
+    std::vector<unsigned int> indexVec = terrainMesh.indices;
+
+	
+
+    
+    /*
     std::vector<float> coordinateVec2 = {
         -0.8, -0.8, 0.0,    -0.4, -0.8, 0.0,    0.8, -0.4, 0.0, 
          0.8, 0.8, 0.0,      0.4, 0.8, 0.0,     0.8, 0.4, 0.0, 
@@ -69,8 +81,9 @@ void runProgram(GLFWwindow* window)
         0.0, 0.0, 1.0, 0.3,     0.0, 0.0, 1.0, 0.3,      0.0, 0.0, 1.0, 0.3,
         1.0, 0.0, 0.0, 0.3,     1.0, 0.0, 0.0, 0.3,      1.0, 0.0, 0.0, 0.3,
     };
+    */
 
-    int index = setUpVAOtriangle(coordinateVec, indexVec, colorVec);
+    int index = setUpVAOtriangle(vertexVec, colorVec, normalVec, indexVec);
 
     // transformation matrices
     glm::mat4x4 MVPmatrix = glm::mat4(1.0f); 
@@ -79,9 +92,6 @@ void runProgram(GLFWwindow* window)
     glm::mat4x4 viewMatrix = glm::mat4(1.0f); 
     glm::mat4x4 xRotateMatrix = glm::mat4(1.0f); 
     glm::mat4x4 yRotateMatrix = glm::mat4(1.0f); 
-    
-    // transformation scaling helper 
-    float scaler = 0;
 
     // Rendering Loop
     shader.activate();
@@ -98,10 +108,6 @@ void runProgram(GLFWwindow* window)
         
         printGLError();
 
-        // translation scaling helper 
-        int scalerLocation = glGetUniformLocation(shader.get(), "scaler");
-        scaler += 0.1;
-        glUniform1f(scalerLocation, sin(scaler));
 
         // MVP
         viewMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0,-1.0));
@@ -201,9 +207,10 @@ void handleKeyboardInput(GLFWwindow* window)
 }
 
 
-int setUpVAOtriangle(std::vector<float> vertexCoordinates, 
-                     std::vector<unsigned int> indexArray,
-                     std::vector<float> colorArray)
+int setUpVAOtriangle(std::vector<float> vertexVec, 
+                     std::vector<float> colorVec,
+                     std::vector<float> normalVec,
+                     std::vector<unsigned int> indexVec)
 {
     // setup array
     unsigned int arrayID = 0;
@@ -214,21 +221,28 @@ int setUpVAOtriangle(std::vector<float> vertexCoordinates,
     unsigned int vertexBufferID = 0;
     glGenBuffers(1, &vertexBufferID);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertexCoordinates.size(), vertexCoordinates.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertexVec.size(), vertexVec.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE,0,0); 
     glEnableVertexAttribArray(0);
 
     // index buffer
-    unsigned int indexBufferID = 1;
+    unsigned int indexBufferID = 4;
     glGenBuffers(1, &indexBufferID);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indexArray.size(), indexArray.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indexVec.size(), indexVec.data(), GL_STATIC_DRAW);
     
     // color buffer
-    unsigned int colorBufferID = 2;
+    unsigned int colorBufferID = 1;
     glGenBuffers(1, &colorBufferID);
     glBindBuffer(GL_ARRAY_BUFFER, colorBufferID);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*colorArray.size(), colorArray.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*colorVec.size(), colorVec.data(), GL_STATIC_DRAW);
+
+    // normal buffer
+    unsigned int normalBufferID = 2;
+    glGenBuffers(1, &normalBufferID);
+    glBindBuffer(GL_ARRAY_BUFFER, normalBufferID);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*normalVec.size(), normalVec.data(), GL_STATIC_DRAW);
+
     glVertexAttribPointer(1, 4, GL_FLOAT,GL_FALSE,0,0); 
     glEnableVertexAttribArray(1);
 

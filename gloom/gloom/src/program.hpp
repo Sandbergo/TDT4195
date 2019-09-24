@@ -59,9 +59,10 @@ inline void printGLError() {
 
 // create VAO object 
 
-int setUpVAOtriangle(std::vector<float> vertexCoordinates, 
-                     std::vector<unsigned int> indexArray, 
-                     std::vector<float> colorArray);
+int setUpVAOtriangle(std::vector<float> vertexVec, 
+                     std::vector<float> colorVec,
+                     std::vector<float> normalVec,
+                     std::vector<unsigned int> indexVec);
 
 
 void updateMVP();
