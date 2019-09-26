@@ -41,8 +41,9 @@ void runProgram(GLFWwindow* window)
     std::vector<float> normalVec = terrainMesh.normals;
     std::vector<unsigned int> indexVec = terrainMesh.indices;
 
-	
-
+    for (int i = 0; i < normalVec.size(); i++) {
+		std::cout << normalVec.at(i) << ' ';
+	}
     
     /*
     std::vector<float> coordinateVec2 = {
@@ -161,8 +162,6 @@ void handleKeyboardInput(GLFWwindow* window)
             if (rotationVec[0] > -M_PI/2){
                  rotationVec[0]-= speed;
             } 
-
-
         }
     }
 
@@ -226,25 +225,27 @@ int setUpVAOtriangle(std::vector<float> vertexVec,
     glEnableVertexAttribArray(0);
 
     // index buffer
-    unsigned int indexBufferID = 4;
+    unsigned int indexBufferID = 1;
     glGenBuffers(1, &indexBufferID);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indexVec.size(), indexVec.data(), GL_STATIC_DRAW);
     
     // color buffer
-    unsigned int colorBufferID = 1;
+    unsigned int colorBufferID = 2;
     glGenBuffers(1, &colorBufferID);
     glBindBuffer(GL_ARRAY_BUFFER, colorBufferID);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*colorVec.size(), colorVec.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 4, GL_FLOAT,GL_FALSE,0,0); 
+    glEnableVertexAttribArray(1);
 
     // normal buffer
-    unsigned int normalBufferID = 2;
+    unsigned int normalBufferID = 3;
     glGenBuffers(1, &normalBufferID);
     glBindBuffer(GL_ARRAY_BUFFER, normalBufferID);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*normalVec.size(), normalVec.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(1, 4, GL_FLOAT,GL_FALSE,0,0); 
-    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT,GL_FALSE,0,0); 
+    glEnableVertexAttribArray(2);
+    
 
     return arrayID;
 }
