@@ -1,19 +1,19 @@
 #version 430 core
 
 layout(location=0) in vec3 position;
-layout(location=1) in vec4 colorIn;
-layout(location=2) in vec3 normalIn;
+layout(location=1) in vec4 color;
+layout(location=2) in vec3 normal;
 
-layout(location=1) out vec4 colorOut;
-layout(location=2) out vec3 normalOut;
+layout(location=1) out vec4 colorV;
+layout(location=2) out vec3 normalV;
 
 uniform mat4x4 MVPmatrix;
 uniform float scaler;
 
 void main()
 {
-    colorOut = colorIn;
-    normalOut = normalIn;
+    colorV = color;
+    normalV = normal;
 
     gl_Position = MVPmatrix * vec4(position.x, position.y, position.z, 1.0f);
 }

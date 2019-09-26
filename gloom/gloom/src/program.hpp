@@ -8,7 +8,10 @@
 #include <glad/glad.h>
 #include <string>
 #include <vector>
+#include <sceneGraph.hpp>
 #include <glm/vec3.hpp>
+#include "gloom/gloom.hpp"
+#include "gloom/shader.hpp"
 
 
 // Main OpenGL program
@@ -67,4 +70,7 @@ int setUpVAOtriangle(std::vector<float> vertexVec,
 
 void updateMVP();
 
+SceneNode* createSceneGraph();
+
+void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shader* shader);
 #endif

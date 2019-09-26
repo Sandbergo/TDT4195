@@ -3,6 +3,7 @@
 #include "gloom/shader.hpp"
 #include "gloom/gloom.hpp"
 #include "OBJLoader.hpp"
+#include "sceneGraph.hpp"
 #include "math.h"
 #include <iostream>
 #include <glm/mat4x4.hpp>
@@ -34,66 +35,58 @@ void runProgram(GLFWwindow* window)
     glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
     // Set up your scene here (create Vertex Array Objects, etc.)
+    // Terrain
     Mesh terrainMesh = loadTerrainMesh("../gloom/resources/lunarsurface.obj");
 
-    std::vector<float> vertexVec = terrainMesh.vertices;
-    std::vector<float> colorVec = terrainMesh.colours;
-    std::vector<float> normalVec = terrainMesh.normals;
-    std::vector<unsigned int> indexVec = terrainMesh.indices;
+    std::vector<float> vertexVecTerr = terrainMesh.vertices;
+    std::vector<float> colorVecTerr = terrainMesh.colours;
+    std::vector<float> normalVecTerr = terrainMesh.normals;
+    std::vector<unsigned int> indexVecTerr = terrainMesh.indices;
 
-    for (int i = 0; i < normalVec.size(); i++) {
-		std::cout << normalVec.at(i) << ' ';
-	}
+    int indexTerr = setUpVAOtriangle(vertexVecTerr, colorVecTerr, normalVecTerr, indexVecTerr);
+
+    // Helicopter
+    Helicopter heliObj = loadHelicopterModel("../gloom/resources/helicopter.obj");   
+
+    Mesh body = heliObj.body;
+    Mesh mainRotor = heliObj.mainRotor;
+    Mesh tailRotor = heliObj.tailRotor;
+    Mesh door = heliObj.door;
+
+    std::vector<float> vertexVecBody = body.vertices;
+    std::vector<float> colorVecBody = body.colours;
+    std::vector<float> normalVecBody = body.normals;
+    std::vector<unsigned int> indexVecBody = body.indices;
+    int indexBody = setUpVAOtriangle(vertexVecBody, colorVecBody, normalVecBody, indexVecBody);
+
+    std::vector<float> vertexVecMainRotor = mainRotor.vertices;
+    std::vector<float> colorVecMainRotor = mainRotor.colours;
+    std::vector<float> normalVecMainRotor = mainRotor.normals;
+    std::vector<unsigned int> indexVecMainRotor = mainRotor.indices;
+    int indexMainRotor = setUpVAOtriangle(vertexVecMainRotor, colorVecMainRotor, normalVecMainRotor, indexVecMainRotor);
+
     
-    /*
-    std::vector<float> coordinateVec2 = {
-        -0.8, -0.8, 0.0,    -0.4, -0.8, 0.0,    0.8, -0.4, 0.0, 
-         0.8, 0.8, 0.0,      0.4, 0.8, 0.0,     0.8, 0.4, 0.0, 
-         0.0, 0.0, 0.0,      1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
-        -1.0, 1.0, 0.0,     -1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
-         0.0, 0.0, 0.0,     -1.0, 0.0, 0.0,     0.0, -1.0, 0.0,
-    };
+    std::vector<float> vertexVecTailRotor = tailRotor.vertices;
+    std::vector<float> colorVecTailRotor = tailRotor.colours;
+    std::vector<float> normalVecTailRotor = tailRotor.normals;
+    std::vector<unsigned int> indexVecTailRotor = tailRotor.indices;
+    int indexTailRotor = setUpVAOtriangle(vertexVecTailRotor, colorVecTailRotor, normalVecTailRotor, indexVecTailRotor);
+
+    std::vector<float> vertexVecDoor = body.vertices;
+    std::vector<float> colorVecDoor = body.colours;
+    std::vector<float> normalVecDoor = body.normals;
+    std::vector<unsigned int> indexVecDoor = body.indices;
+    int indexDoor = setUpVAOtriangle(vertexVecDoor, colorVecDoor, normalVecDoor, indexVecDoor);
     
-    std::vector<unsigned int> indexVec2 = 
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
-
-    std::vector<float> colorVec2 = {
-        1.0, 0.9, 1.0, 0.6,     0.1, 0.1, 0.1, 0.6,      1.0, 1.0, 0.0, 0.6,
-        0.7, 0.6, 1.0, 0.4,     1.0, 1.0, 1.0, 0.4,      1.0, 0.0, 0.6, 0.4,
-        1.0, 0.4, 1.0, 0.5,     0.6, 0.4, 1.0, 0.9,      0.7, 0.4, 1.0, 0.5,
-        0.7, 0.4, 0.0, 0.9,     1.0, 0.9, 0.3, 0.8,      1.0, 0.4, 0.3, 0.9,
-        0.6, 0.4, 1.0, 0.8,     0.1, 0.1, 0.1, 0.6,      0.0, 0.4, 0.6, 0.8,
-    };
-
-    std::vector<float> coordinateVec = {
-         0.0, 0.0, -0.0,      1.0, 0.0, -0.0,     0.0, 1.0, -0.0,
-        -0.8, -0.8, -0.5,     0.8, -0.8, -0.5,    0.0, 0.8, -0.5, 
-         0.8, 0.8, 0.5,      -0.8, 0.8, 0.5,      0.8, -0.8, 0.5, 
-    };
-    
-    std::vector<unsigned int> indexVecOld = 
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, };
-
-    std::vector<unsigned int> indexVec = 
-    {6,7,8,3,4,5,0,1,2};
-
-    std::vector<float> colorVec = {
-        0.0, 1.0, 0.0, 0.3,     0.0, 1.0, 0.0, 0.3,      0.0, 1.0, 0.0, 0.3,
-        0.0, 0.0, 1.0, 0.3,     0.0, 0.0, 1.0, 0.3,      0.0, 0.0, 1.0, 0.3,
-        1.0, 0.0, 0.0, 0.3,     1.0, 0.0, 0.0, 0.3,      1.0, 0.0, 0.0, 0.3,
-    };
-    */
-
-    int index = setUpVAOtriangle(vertexVec, colorVec, normalVec, indexVec);
-
     // transformation matrices
-    glm::mat4x4 MVPmatrix = glm::mat4(1.0f); 
-    glm::mat4x4 perspMatrix = glm::perspective(2.0, 4.0 / 3.0, 1.0, 100.0);
+    glm::mat4 MVPmatrix = glm::mat4(1.0f); 
+    glm::mat4x4 perspMatrix = glm::perspective(3.14/2.0, 4.0 / 3.0, 1.0, 1000.0);
     glm::mat4x4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,-1.0f));
     glm::mat4x4 viewMatrix = glm::mat4(1.0f); 
     glm::mat4x4 xRotateMatrix = glm::mat4(1.0f); 
     glm::mat4x4 yRotateMatrix = glm::mat4(1.0f); 
 
+    SceneNode* root = createSceneGraph();
     // Rendering Loop
     shader.activate();
     while (!glfwWindowShouldClose(window))
@@ -106,23 +99,36 @@ void runProgram(GLFWwindow* window)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Draw your scene here
-        
         printGLError();
-
 
         // MVP
         viewMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0,-1.0));
         modelMatrix = glm::translate(glm::mat4(1.0f), motionVec);
         yRotateMatrix = glm::rotate(rotationVec[1],glm::vec3(0,1,0));
         xRotateMatrix = glm::rotate(rotationVec[0],glm::vec3(1,0,0));
-        MVPmatrix = perspMatrix*yRotateMatrix*xRotateMatrix*viewMatrix*modelMatrix;
-
+        MVPmatrix = perspMatrix*xRotateMatrix*yRotateMatrix*viewMatrix*modelMatrix;
+        /*
         int MVPlocation = glGetUniformLocation(shader.get(), "MVPmatrix");
         glUniformMatrix4fv(MVPlocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
 
         // Draw scene
-        glBindVertexArray(index);
-        glDrawElements(GL_TRIANGLES, indexVec.size(), GL_UNSIGNED_INT, 0);
+        
+        glBindVertexArray(indexTerr);
+        glDrawElements(GL_TRIANGLES, indexVecTerr.size(), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(indexBody);
+        glDrawElements(GL_TRIANGLES, indexVecBody.size(), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(indexMainRotor);
+        glDrawElements(GL_TRIANGLES, indexVecMainRotor.size(), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(indexTailRotor);
+        glDrawElements(GL_TRIANGLES, indexVecTailRotor.size(), GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(indexDoor);
+        glDrawElements(GL_TRIANGLES, indexVecDoor.size(), GL_UNSIGNED_INT, 0);
+        */
+        drawSceneNode(root, MVPmatrix, &shader);
        
         // Handle other events
         glfwPollEvents();
@@ -169,7 +175,7 @@ void handleKeyboardInput(GLFWwindow* window)
         // for task 5 a
         glm::mat3x3 yRotateMatrix = glm::rotate(rotationVec[1],glm::vec3(0,1,0));
         glm::mat3x3 xRotateMatrix = glm::rotate(rotationVec[0],glm::vec3(1,0,0));
-        
+        speed = 0.5;
         // left/right for sideways translation
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
             glm::vec3 speedVec = glm::vec3(speed,0.0f,0.0f);
@@ -248,4 +254,116 @@ int setUpVAOtriangle(std::vector<float> vertexVec,
     
 
     return arrayID;
+}
+
+SceneNode* createSceneGraph(){
+    // Terrain
+    Mesh terrainMesh = loadTerrainMesh("../gloom/resources/lunarsurface.obj");
+
+    std::vector<float> vertexVecTerr = terrainMesh.vertices;
+    std::vector<float> colorVecTerr = terrainMesh.colours;
+    std::vector<float> normalVecTerr = terrainMesh.normals;
+    std::vector<unsigned int> indexVecTerr = terrainMesh.indices;
+    int indexTerr = setUpVAOtriangle(vertexVecTerr, colorVecTerr, normalVecTerr, indexVecTerr);
+
+    // Helicopter
+    Helicopter heliObj = loadHelicopterModel("../gloom/resources/helicopter.obj");   
+
+    Mesh body = heliObj.body;
+    Mesh mainRotor = heliObj.mainRotor;
+    Mesh tailRotor = heliObj.tailRotor;
+    Mesh door = heliObj.door;
+
+    std::vector<float> vertexVecBody = body.vertices;
+    std::vector<float> colorVecBody = body.colours;
+    std::vector<float> normalVecBody = body.normals;
+    std::vector<unsigned int> indexVecBody = body.indices;
+    int indexBody = setUpVAOtriangle(vertexVecBody, colorVecBody, normalVecBody, indexVecBody);
+
+    std::vector<float> vertexVecMainRotor = mainRotor.vertices;
+    std::vector<float> colorVecMainRotor = mainRotor.colours;
+    std::vector<float> normalVecMainRotor = mainRotor.normals;
+    std::vector<unsigned int> indexVecMainRotor = mainRotor.indices;
+    int indexMainRotor = setUpVAOtriangle(vertexVecMainRotor, colorVecMainRotor, normalVecMainRotor, indexVecMainRotor);
+    
+    std::vector<float> vertexVecTailRotor = tailRotor.vertices;
+    std::vector<float> colorVecTailRotor = tailRotor.colours;
+    std::vector<float> normalVecTailRotor = tailRotor.normals;
+    std::vector<unsigned int> indexVecTailRotor = tailRotor.indices;
+    int indexTailRotor = setUpVAOtriangle(vertexVecTailRotor, colorVecTailRotor, normalVecTailRotor, indexVecTailRotor);
+
+    std::vector<float> vertexVecDoor = body.vertices;
+    std::vector<float> colorVecDoor = body.colours;
+    std::vector<float> normalVecDoor = body.normals;
+    std::vector<unsigned int> indexVecDoor = body.indices;
+    int indexDoor = setUpVAOtriangle(vertexVecDoor, colorVecDoor, normalVecDoor, indexVecDoor);
+
+
+    // Nodes
+    SceneNode* terrNode = createSceneNode();
+    terrNode->vertexArrayObjectID = indexTerr;
+    terrNode->VAOIndexCount = indexVecTerr.size();
+    terrNode->referencePoint = glm::vec3(0,0,0);
+
+
+    SceneNode* bodyNode = createSceneNode();
+    bodyNode->vertexArrayObjectID = indexBody;
+    bodyNode->VAOIndexCount = indexVecBody.size();
+    bodyNode->referencePoint = glm::vec3(0,0,0);
+
+
+    SceneNode* mainRotorNode = createSceneNode();
+    mainRotorNode->vertexArrayObjectID = indexMainRotor;
+    mainRotorNode->VAOIndexCount = indexVecMainRotor.size();
+    mainRotorNode->referencePoint = glm::vec3(0,0,0);
+
+
+    SceneNode* tailRotorNode = createSceneNode();
+    tailRotorNode->vertexArrayObjectID = indexTailRotor;
+    tailRotorNode->VAOIndexCount = indexVecTailRotor.size();
+    tailRotorNode->referencePoint = glm::vec3(0,0,0);
+
+    SceneNode* doorNode = createSceneNode();
+    doorNode->vertexArrayObjectID = indexDoor;
+    doorNode->VAOIndexCount = indexVecDoor.size();
+    doorNode->referencePoint = glm::vec3(0,0,0);
+
+    SceneNode* rootNode = createSceneNode();
+
+    addChild(rootNode,terrNode);
+    addChild(rootNode,bodyNode);
+    addChild(bodyNode,mainRotorNode);
+    addChild(bodyNode,tailRotorNode);
+    addChild(bodyNode,doorNode);
+
+    printNode(rootNode);
+
+    return rootNode;
+}
+
+void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shader* shader) {
+
+    int vaoID = root->vertexArrayObjectID;
+
+    root->currentTransformationMatrix =
+         viewProjectionMatrix *
+         glm::translate(root->position) *
+         glm::translate(root->referencePoint) *
+         glm::rotate(glm::mat4(), root->rotation.x, glm::vec3(1, 0, 0)) *
+         glm::rotate(glm::mat4(), root->rotation.y, glm::vec3(0, 1, 0)) *
+         glm::rotate(glm::mat4(), root->rotation.z, glm::vec3(0, 0, 1)) *
+         glm::translate(-root->referencePoint);
+
+
+    if (vaoID > -1) {
+        int location = glGetUniformLocation(shader->get(), "MVPmatrix");
+        glBindVertexArray(vaoID);
+        //glUniformMatrix4fv(location, 1, GL_FALSE, &root->currentTransformationMatrix);
+        glUniformMatrix4fv(location, 1, GL_FALSE,glm::value_ptr(root->currentTransformationMatrix));
+        glDrawElements(GL_TRIANGLES, root->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+    }
+
+    for(SceneNode* child: root->children) {
+        drawSceneNode(child, viewProjectionMatrix, shader);
+    }
 }
