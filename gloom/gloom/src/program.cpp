@@ -107,12 +107,12 @@ void runProgram(GLFWwindow* window)
         yRotateMatrix = glm::rotate(rotationVec[1],glm::vec3(0,1,0));
         xRotateMatrix = glm::rotate(rotationVec[0],glm::vec3(1,0,0));
         MVPmatrix = perspMatrix*xRotateMatrix*yRotateMatrix*viewMatrix*modelMatrix;
-        /*
+        
         int MVPlocation = glGetUniformLocation(shader.get(), "MVPmatrix");
         glUniformMatrix4fv(MVPlocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
 
         // Draw scene
-        
+        /*
         glBindVertexArray(indexTerr);
         glDrawElements(GL_TRIANGLES, indexVecTerr.size(), GL_UNSIGNED_INT, 0);
 
@@ -159,13 +159,13 @@ void handleKeyboardInput(GLFWwindow* window)
 
         // up/down for pitch
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
-            if (rotationVec[0] < M_PI/2){
+            if (rotationVec[0] < 3.14/2){
                  rotationVec[0]+= speed;
             } 
         }
        
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
-            if (rotationVec[0] > -M_PI/2){
+            if (rotationVec[0] > -3.14/2){
                  rotationVec[0]-= speed;
             } 
         }
@@ -331,7 +331,7 @@ SceneNode* createSceneGraph(){
     SceneNode* rootNode = createSceneNode();
 
     addChild(rootNode,terrNode);
-    addChild(rootNode,bodyNode);
+    addChild(terrNode,bodyNode);
     addChild(bodyNode,mainRotorNode);
     addChild(bodyNode,tailRotorNode);
     addChild(bodyNode,doorNode);
@@ -345,6 +345,7 @@ void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shade
 
     int vaoID = root->vertexArrayObjectID;
 
+	/*
     root->currentTransformationMatrix =
          viewProjectionMatrix *
          glm::translate(root->position) *
@@ -353,13 +354,13 @@ void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shade
          glm::rotate(glm::mat4(), root->rotation.y, glm::vec3(0, 1, 0)) *
          glm::rotate(glm::mat4(), root->rotation.z, glm::vec3(0, 0, 1)) *
          glm::translate(-root->referencePoint);
-
+	*/
 
     if (vaoID > -1) {
         int location = glGetUniformLocation(shader->get(), "MVPmatrix");
         glBindVertexArray(vaoID);
         //glUniformMatrix4fv(location, 1, GL_FALSE, &root->currentTransformationMatrix);
-        glUniformMatrix4fv(location, 1, GL_FALSE,glm::value_ptr(root->currentTransformationMatrix));
+        glUniformMatrix4fv(location, 1, GL_FALSE,glm::value_ptr(viewProjectionMatrix));
         glDrawElements(GL_TRIANGLES, root->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
     }
 
