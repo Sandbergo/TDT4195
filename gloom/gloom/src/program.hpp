@@ -73,4 +73,7 @@ void updateMVP();
 SceneNode* createSceneGraph();
 
 void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shader* shader);
+
+void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar);
+
 #endif

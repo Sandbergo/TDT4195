@@ -7,13 +7,13 @@ layout(location=2) in vec3 normal;
 layout(location=1) out vec4 colorV;
 layout(location=2) out vec3 normalV;
 
-uniform mat4x4 MVPmatrix;
-uniform float scaler;
+uniform mat4x4 viewMatrix;
+uniform mat4x4 modelMatrix;
 
 void main()
 {
     colorV = color;
     normalV = normal;
 
-    gl_Position = MVPmatrix * vec4(position.x, position.y, position.z, 1.0f);
+    gl_Position = viewMatrix*modelMatrix*vec4(position.x, position.y, position.z, 1.0f);
 }

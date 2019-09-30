@@ -103,31 +103,20 @@ void runProgram(GLFWwindow* window)
 
         // MVP
         viewMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0,-1.0));
-        modelMatrix = glm::translate(glm::mat4(1.0f), motionVec);
+		//viewMatrix = glm::mat4(1.0f);
+		
+		modelMatrix = glm::translate(glm::mat4(1.0f), motionVec);
+		xRotateMatrix = glm::rotate(rotationVec[0], glm::vec3(1,0,0));
         yRotateMatrix = glm::rotate(rotationVec[1],glm::vec3(0,1,0));
-        xRotateMatrix = glm::rotate(rotationVec[0],glm::vec3(1,0,0));
         MVPmatrix = perspMatrix*xRotateMatrix*yRotateMatrix*viewMatrix*modelMatrix;
         
-        int MVPlocation = glGetUniformLocation(shader.get(), "MVPmatrix");
-        glUniformMatrix4fv(MVPlocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
-
+        int viewLocation = glGetUniformLocation(shader.get(), "viewMatrix");
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
+		
         // Draw scene
-        /*
-        glBindVertexArray(indexTerr);
-        glDrawElements(GL_TRIANGLES, indexVecTerr.size(), GL_UNSIGNED_INT, 0);
+		//updateSceneNode(root, MVPmatrix); // old, works 
+		updateSceneNode(root, glm::mat4(1.0f));
 
-        glBindVertexArray(indexBody);
-        glDrawElements(GL_TRIANGLES, indexVecBody.size(), GL_UNSIGNED_INT, 0);
-
-        glBindVertexArray(indexMainRotor);
-        glDrawElements(GL_TRIANGLES, indexVecMainRotor.size(), GL_UNSIGNED_INT, 0);
-
-        glBindVertexArray(indexTailRotor);
-        glDrawElements(GL_TRIANGLES, indexVecTailRotor.size(), GL_UNSIGNED_INT, 0);
-
-        glBindVertexArray(indexDoor);
-        glDrawElements(GL_TRIANGLES, indexVecDoor.size(), GL_UNSIGNED_INT, 0);
-        */
         drawSceneNode(root, MVPmatrix, &shader);
        
         // Handle other events
@@ -309,24 +298,25 @@ SceneNode* createSceneGraph(){
     SceneNode* bodyNode = createSceneNode();
     bodyNode->vertexArrayObjectID = indexBody;
     bodyNode->VAOIndexCount = indexVecBody.size();
-    bodyNode->referencePoint = glm::vec3(0,0,0);
+    bodyNode->referencePoint = glm::vec3(0,0,10.0);
+	bodyNode->position = glm::vec3(1.0, 1.0, 1.0); // tests
 
 
     SceneNode* mainRotorNode = createSceneNode();
     mainRotorNode->vertexArrayObjectID = indexMainRotor;
     mainRotorNode->VAOIndexCount = indexVecMainRotor.size();
-    mainRotorNode->referencePoint = glm::vec3(0,0,0);
+    mainRotorNode->referencePoint = glm::vec3(0.0,0.0,10.4);
 
 
     SceneNode* tailRotorNode = createSceneNode();
     tailRotorNode->vertexArrayObjectID = indexTailRotor;
     tailRotorNode->VAOIndexCount = indexVecTailRotor.size();
-    tailRotorNode->referencePoint = glm::vec3(0,0,0);
+    tailRotorNode->referencePoint = glm::vec3(0.35, 2.3, 10.4);
 
     SceneNode* doorNode = createSceneNode();
     doorNode->vertexArrayObjectID = indexDoor;
     doorNode->VAOIndexCount = indexVecDoor.size();
-    doorNode->referencePoint = glm::vec3(0,0,0);
+    doorNode->referencePoint = glm::vec3(0,0,10.0);
 
     SceneNode* rootNode = createSceneNode();
 
@@ -337,6 +327,7 @@ SceneNode* createSceneGraph(){
     addChild(bodyNode,doorNode);
 
     printNode(rootNode);
+	printNode(bodyNode);
 
     return rootNode;
 }
@@ -345,26 +336,36 @@ void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shade
 
     int vaoID = root->vertexArrayObjectID;
 
-	/*
-    root->currentTransformationMatrix =
-         viewProjectionMatrix *
-         glm::translate(root->position) *
-         glm::translate(root->referencePoint) *
-         glm::rotate(glm::mat4(), root->rotation.x, glm::vec3(1, 0, 0)) *
-         glm::rotate(glm::mat4(), root->rotation.y, glm::vec3(0, 1, 0)) *
-         glm::rotate(glm::mat4(), root->rotation.z, glm::vec3(0, 0, 1)) *
-         glm::translate(-root->referencePoint);
-	*/
 
     if (vaoID > -1) {
-        int location = glGetUniformLocation(shader->get(), "MVPmatrix");
+        int location = glGetUniformLocation(shader->get(), "modelMatrix");
         glBindVertexArray(vaoID);
-        //glUniformMatrix4fv(location, 1, GL_FALSE, &root->currentTransformationMatrix);
-        glUniformMatrix4fv(location, 1, GL_FALSE,glm::value_ptr(viewProjectionMatrix));
+        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(root->currentTransformationMatrix)); // new, does not work
+        //glUniformMatrix4fv(location, 1, GL_FALSE,glm::value_ptr(viewProjectionMatrix)); // old, works
         glDrawElements(GL_TRIANGLES, root->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
     }
 
     for(SceneNode* child: root->children) {
         drawSceneNode(child, viewProjectionMatrix, shader);
     }
+}
+
+
+void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar) {
+	// Do transformation computations here
+	glm::mat4 combinedTransformation = transformationThusFar;
+	// Store matrix in the node's currentTransformationMatrix here
+
+	node->currentTransformationMatrix =
+		transformationThusFar*
+		glm::translate(node->position) *
+		glm::translate(node->referencePoint) *
+		glm::rotate(node->rotation.x, glm::vec3(1, 0, 0)) *
+		glm::rotate(node->rotation.y, glm::vec3(0, 1, 0)) *
+		glm::rotate(node->rotation.z, glm::vec3(0, 0, 1)) *
+		glm::translate(-node->referencePoint);
+
+	for (SceneNode* child : node->children) {
+		updateSceneNode(child, node->currentTransformationMatrix);
+	}
 }
