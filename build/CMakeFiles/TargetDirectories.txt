@@ -1,0 +1,8 @@
+/mnt/c/Users/lars-/OneDrive/NTNU/semester7/gvdb/gloom/build/CMakeFiles/edit_cache.dir
+/mnt/c/Users/lars-/OneDrive/NTNU/semester7/gvdb/gloom/build/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/lars-/OneDrive/NTNU/semester7/gvdb/gloom/build/CMakeFiles/gloom.dir
+/mnt/c/Users/lars-/OneDrive/NTNU/semester7/gvdb/gloom/build/gloom/vendor/glfw/CMakeFiles/edit_cache.dir
+/mnt/c/Users/lars-/OneDrive/NTNU/semester7/gvdb/gloom/build/gloom/vendor/glfw/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/lars-/OneDrive/NTNU/semester7/gvdb/gloom/build/gloom/vendor/glfw/src/CMakeFiles/rebuild_cache.dir
+/mnt/c/Users/lars-/OneDrive/NTNU/semester7/gvdb/gloom/build/gloom/vendor/glfw/src/CMakeFiles/edit_cache.dir
+/mnt/c/Users/lars-/OneDrive/NTNU/semester7/gvdb/gloom/build/gloom/vendor/glfw/src/CMakeFiles/glfw.dir
