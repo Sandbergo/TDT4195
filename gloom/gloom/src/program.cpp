@@ -87,13 +87,23 @@ void runProgram(GLFWwindow* window)
     glm::mat4x4 xRotateMatrix = glm::mat4(1.0f); 
     glm::mat4x4 yRotateMatrix = glm::mat4(1.0f); 
 
-    SceneNode* root = createSceneGraph();
+	SceneNode* root1 = createSceneGraph();
+	SceneNode* root2 = createSceneGraph();
+	SceneNode* root3 = createSceneGraph();
+	SceneNode* root4 = createSceneGraph();
+	SceneNode* root5 = createSceneGraph();
+
+	SceneNode* nodes[5] = { root1, root2, root3, root4, root5 };
+
+	float deltaTime = 0;
 	float time = 0;
     // Rendering Loop
     shader.activate();
     while (!glfwWindowShouldClose(window))
     {
-		time += getTimeDeltaSeconds();
+		deltaTime = getTimeDeltaSeconds();
+		time += deltaTime;
+
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -117,10 +127,11 @@ void runProgram(GLFWwindow* window)
         glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
 		
         // Draw scene
-		//updateSceneNode(root, MVPmatrix); // old, works 
-		updateSceneNode(root, glm::mat4(1.0f), time);
-
-        drawSceneNode(root, MVPmatrix, &shader);
+		for (int i = 0; i <= 4; i++) {
+			float timeoffset = time + 1.5*i;
+			updateSceneNode(nodes[i], glm::mat4(1.0f), timeoffset);
+			drawSceneNode(nodes[i], MVPmatrix, &shader);
+		}
        
         // Handle other events
         glfwPollEvents();
@@ -361,13 +372,13 @@ void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float tim
 	// Do transformation computations here
 	glm::mat4 combinedTransformation = transformationThusFar;
 	// Store matrix in the node's currentTransformationMatrix here
-	
-	if (node->vertexArrayObjectID == 7) {
+	int ID = node->vertexArrayObjectID;
+	if (ID > 5 && (ID % 5 == 2)) {
 		Heading heading = simpleHeadingAnimation(time);
 		node->position = glm::vec3(heading.x, 0, heading.z);
 		node->rotation = glm::vec3(heading.roll, heading.pitch, heading.yaw);
 	}
-	if (node->vertexArrayObjectID > 7) {
+	if (ID > 5 && ((ID % 5 == 3) || (ID % 5 == 4))) {
 		float timeDelta = getTimeDeltaSeconds();
 		node->rotation = node->rotation + timeDelta * node->rotation;
 	}

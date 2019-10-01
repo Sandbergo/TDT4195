@@ -13,7 +13,7 @@ uniform mat4x4 modelMatrix;
 void main()
 {
     colorV = color;
-    normalV = normal;
+    normalV = normalize(mat3(modelMatrix) * normal);
 
     gl_Position = viewMatrix*modelMatrix*vec4(position.x, position.y, position.z, 1.0f);
 }
