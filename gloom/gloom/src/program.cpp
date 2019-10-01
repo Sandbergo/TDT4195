@@ -4,6 +4,7 @@
 #include "gloom/gloom.hpp"
 #include "OBJLoader.hpp"
 #include "sceneGraph.hpp"
+#include "toolbox.hpp"
 #include "math.h"
 #include <iostream>
 #include <glm/mat4x4.hpp>
@@ -87,10 +88,12 @@ void runProgram(GLFWwindow* window)
     glm::mat4x4 yRotateMatrix = glm::mat4(1.0f); 
 
     SceneNode* root = createSceneGraph();
+	float time = 0;
     // Rendering Loop
     shader.activate();
     while (!glfwWindowShouldClose(window))
     {
+		time += getTimeDeltaSeconds();
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -115,7 +118,7 @@ void runProgram(GLFWwindow* window)
 		
         // Draw scene
 		//updateSceneNode(root, MVPmatrix); // old, works 
-		updateSceneNode(root, glm::mat4(1.0f));
+		updateSceneNode(root, glm::mat4(1.0f), time);
 
         drawSceneNode(root, MVPmatrix, &shader);
        
@@ -298,25 +301,27 @@ SceneNode* createSceneGraph(){
     SceneNode* bodyNode = createSceneNode();
     bodyNode->vertexArrayObjectID = indexBody;
     bodyNode->VAOIndexCount = indexVecBody.size();
-    bodyNode->referencePoint = glm::vec3(0,0,10.0);
-	bodyNode->position = glm::vec3(1.0, 1.0, 1.0); // tests
+    bodyNode->referencePoint = glm::vec3(0,0,0);
+	//bodyNode->position = glm::vec3(1.0, 1.0, 1.0); // tests
 
 
     SceneNode* mainRotorNode = createSceneNode();
     mainRotorNode->vertexArrayObjectID = indexMainRotor;
     mainRotorNode->VAOIndexCount = indexVecMainRotor.size();
-    mainRotorNode->referencePoint = glm::vec3(0.0,0.0,10.4);
+    mainRotorNode->referencePoint = glm::vec3(0.0,0.0,0);
+	mainRotorNode->rotation = glm::vec3(0, 500, 0); // rotating in socket
 
 
     SceneNode* tailRotorNode = createSceneNode();
     tailRotorNode->vertexArrayObjectID = indexTailRotor;
     tailRotorNode->VAOIndexCount = indexVecTailRotor.size();
     tailRotorNode->referencePoint = glm::vec3(0.35, 2.3, 10.4);
+	tailRotorNode->rotation = glm::vec3(2000, 0, 0); // rotating in socket
 
     SceneNode* doorNode = createSceneNode();
     doorNode->vertexArrayObjectID = indexDoor;
     doorNode->VAOIndexCount = indexVecDoor.size();
-    doorNode->referencePoint = glm::vec3(0,0,10.0);
+    doorNode->referencePoint = glm::vec3(0,0,0);
 
     SceneNode* rootNode = createSceneNode();
 
@@ -328,6 +333,8 @@ SceneNode* createSceneGraph(){
 
     printNode(rootNode);
 	printNode(bodyNode);
+	printNode(tailRotorNode);
+	printNode(mainRotorNode);
 
     return rootNode;
 }
@@ -335,7 +342,6 @@ SceneNode* createSceneGraph(){
 void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shader* shader) {
 
     int vaoID = root->vertexArrayObjectID;
-
 
     if (vaoID > -1) {
         int location = glGetUniformLocation(shader->get(), "modelMatrix");
@@ -351,11 +357,21 @@ void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shade
 }
 
 
-void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar) {
+void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time) {
 	// Do transformation computations here
 	glm::mat4 combinedTransformation = transformationThusFar;
 	// Store matrix in the node's currentTransformationMatrix here
-
+	
+	if (node->vertexArrayObjectID == 7) {
+		Heading heading = simpleHeadingAnimation(time);
+		node->position = glm::vec3(heading.x, 0, heading.z);
+		node->rotation = glm::vec3(heading.roll, heading.pitch, heading.yaw);
+	}
+	if (node->vertexArrayObjectID > 7) {
+		float timeDelta = getTimeDeltaSeconds();
+		node->rotation = node->rotation + timeDelta * node->rotation;
+	}
+	
 	node->currentTransformationMatrix =
 		transformationThusFar*
 		glm::translate(node->position) *
@@ -366,6 +382,6 @@ void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar) {
 		glm::translate(-node->referencePoint);
 
 	for (SceneNode* child : node->children) {
-		updateSceneNode(child, node->currentTransformationMatrix);
+		updateSceneNode(child, node->currentTransformationMatrix, time);
 	}
 }
