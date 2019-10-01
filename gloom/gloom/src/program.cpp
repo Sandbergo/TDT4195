@@ -97,6 +97,8 @@ void runProgram(GLFWwindow* window)
 
 	float deltaTime = 0;
 	float time = 0;
+    bool doorToggle = false;
+
     // Rendering Loop
     shader.activate();
     while (!glfwWindowShouldClose(window))
@@ -129,13 +131,16 @@ void runProgram(GLFWwindow* window)
         // Draw scene
 		for (int i = 0; i <= 4; i++) {
 			float timeoffset = time + 1.5*i;
-			updateSceneNode(nodes[i], glm::mat4(1.0f), timeoffset);
+			updateSceneNode(nodes[i], glm::mat4(1.0f), timeoffset, doorToggle);
 			drawSceneNode(nodes[i], MVPmatrix, &shader);
 		}
        
         // Handle other events
         glfwPollEvents();
         handleKeyboardInput(window);
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS){
+            doorToggle = true;
+        }
 
         // Flip buffers
         glfwSwapBuffers(window);
@@ -163,13 +168,13 @@ void handleKeyboardInput(GLFWwindow* window)
         // up/down for pitch
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
             if (rotationVec[0] < 3.14/2){
-                 rotationVec[0]+= speed;
+                 rotationVec[0]-= speed;
             } 
         }
        
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
             if (rotationVec[0] > -3.14/2){
-                 rotationVec[0]-= speed;
+                 rotationVec[0]+= speed;
             } 
         }
     }
@@ -211,6 +216,7 @@ void handleKeyboardInput(GLFWwindow* window)
             glm::vec3 speedVec = glm::vec3(0.0f,0.0f,speed);
             motionVec-= speedVec*yRotateMatrix*xRotateMatrix;
         }
+
     }
 }
 
@@ -255,7 +261,6 @@ int setUpVAOtriangle(std::vector<float> vertexVec,
     glVertexAttribPointer(2, 3, GL_FLOAT,GL_FALSE,0,0); 
     glEnableVertexAttribArray(2);
     
-
     return arrayID;
 }
 
@@ -295,12 +300,11 @@ SceneNode* createSceneGraph(){
     std::vector<unsigned int> indexVecTailRotor = tailRotor.indices;
     int indexTailRotor = setUpVAOtriangle(vertexVecTailRotor, colorVecTailRotor, normalVecTailRotor, indexVecTailRotor);
 
-    std::vector<float> vertexVecDoor = body.vertices;
-    std::vector<float> colorVecDoor = body.colours;
-    std::vector<float> normalVecDoor = body.normals;
-    std::vector<unsigned int> indexVecDoor = body.indices;
+    std::vector<float> vertexVecDoor = door.vertices;
+    std::vector<float> colorVecDoor = door.colours;
+    std::vector<float> normalVecDoor = door.normals;
+    std::vector<unsigned int> indexVecDoor = door.indices;
     int indexDoor = setUpVAOtriangle(vertexVecDoor, colorVecDoor, normalVecDoor, indexVecDoor);
-
 
     // Nodes
     SceneNode* terrNode = createSceneNode();
@@ -308,26 +312,20 @@ SceneNode* createSceneGraph(){
     terrNode->VAOIndexCount = indexVecTerr.size();
     terrNode->referencePoint = glm::vec3(0,0,0);
 
-
     SceneNode* bodyNode = createSceneNode();
     bodyNode->vertexArrayObjectID = indexBody;
     bodyNode->VAOIndexCount = indexVecBody.size();
     bodyNode->referencePoint = glm::vec3(0,0,0);
-	//bodyNode->position = glm::vec3(1.0, 1.0, 1.0); // tests
-
 
     SceneNode* mainRotorNode = createSceneNode();
     mainRotorNode->vertexArrayObjectID = indexMainRotor;
     mainRotorNode->VAOIndexCount = indexVecMainRotor.size();
     mainRotorNode->referencePoint = glm::vec3(0.0,0.0,0);
-	mainRotorNode->rotation = glm::vec3(0, 500, 0); // rotating in socket
-
 
     SceneNode* tailRotorNode = createSceneNode();
     tailRotorNode->vertexArrayObjectID = indexTailRotor;
     tailRotorNode->VAOIndexCount = indexVecTailRotor.size();
     tailRotorNode->referencePoint = glm::vec3(0.35, 2.3, 10.4);
-	tailRotorNode->rotation = glm::vec3(2000, 0, 0); // rotating in socket
 
     SceneNode* doorNode = createSceneNode();
     doorNode->vertexArrayObjectID = indexDoor;
@@ -342,11 +340,6 @@ SceneNode* createSceneGraph(){
     addChild(bodyNode,tailRotorNode);
     addChild(bodyNode,doorNode);
 
-    printNode(rootNode);
-	printNode(bodyNode);
-	printNode(tailRotorNode);
-	printNode(mainRotorNode);
-
     return rootNode;
 }
 
@@ -357,8 +350,7 @@ void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shade
     if (vaoID > -1) {
         int location = glGetUniformLocation(shader->get(), "modelMatrix");
         glBindVertexArray(vaoID);
-        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(root->currentTransformationMatrix)); // new, does not work
-        //glUniformMatrix4fv(location, 1, GL_FALSE,glm::value_ptr(viewProjectionMatrix)); // old, works
+        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(root->currentTransformationMatrix)); 
         glDrawElements(GL_TRIANGLES, root->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
     }
 
@@ -368,20 +360,28 @@ void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shade
 }
 
 
-void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time) {
-	// Do transformation computations here
-	glm::mat4 combinedTransformation = transformationThusFar;
-	// Store matrix in the node's currentTransformationMatrix here
+void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time, bool door) {
 	int ID = node->vertexArrayObjectID;
+
+    // ID for bodies
 	if (ID > 5 && (ID % 5 == 2)) {
 		Heading heading = simpleHeadingAnimation(time);
 		node->position = glm::vec3(heading.x, 0, heading.z);
-		node->rotation = glm::vec3(heading.roll, heading.pitch, heading.yaw);
+		node->rotation = glm::vec3(heading.pitch, heading.yaw, heading.roll);
 	}
-	if (ID > 5 && ((ID % 5 == 3) || (ID % 5 == 4))) {
-		float timeDelta = getTimeDeltaSeconds();
-		node->rotation = node->rotation + timeDelta * node->rotation;
+    // ID for main rotors
+	if (ID > 5 && (ID % 5 == 3)) {
+        node->rotation.y = time*300;
 	}
+    // ID for tail rotors
+    if (ID > 5 && (ID % 5 == 4) ) {
+        node->rotation.x = time*300;
+	}
+    
+    // open door
+    if((door) && (ID % 5 == 0) && (ID != 0) && ((node->position.z) < 1)){
+        node->position.z+=0.01;
+    }
 	
 	node->currentTransformationMatrix =
 		transformationThusFar*
@@ -393,6 +393,6 @@ void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float tim
 		glm::translate(-node->referencePoint);
 
 	for (SceneNode* child : node->children) {
-		updateSceneNode(child, node->currentTransformationMatrix, time);
+		updateSceneNode(child, node->currentTransformationMatrix, time, door);
 	}
 }
