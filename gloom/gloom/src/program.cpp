@@ -13,6 +13,15 @@
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+// definitions for helicopter parts. Works for a graph of one terrain and an arbitrary number of equal meshes
+const unsigned int OFFSET_ID = 5;
+const unsigned int BODY_ID = 2;
+const unsigned int MAIN_ROTOR_ID = 3;
+const unsigned int TAIL_ROTOR_ID = 4;
+const unsigned int DOOR_ID = 0;
+const int ROTOR_SPEED = 300;
+bool openDoor = false;
+
 // current motion and rotation vectors
 glm::vec3 motionVec = glm::vec3(0.0f,0.0f,-1.0f);
 glm::vec3 rotationVec = glm::vec3(0.0f,0.0f,0.0f);
@@ -94,17 +103,15 @@ void runProgram(GLFWwindow* window)
 	SceneNode* root5 = createSceneGraph();
 
 	SceneNode* nodes[5] = { root1, root2, root3, root4, root5 };
-
 	float deltaTime = 0;
 	float time = 0;
-    bool doorToggle = false;
 
     // Rendering Loop
     shader.activate();
     while (!glfwWindowShouldClose(window))
     {
 		deltaTime = getTimeDeltaSeconds();
-		time += deltaTime;
+		time += deltaTime*0.01;
 
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -118,8 +125,6 @@ void runProgram(GLFWwindow* window)
 
         // MVP
         viewMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0,-1.0));
-		//viewMatrix = glm::mat4(1.0f);
-		
 		modelMatrix = glm::translate(glm::mat4(1.0f), motionVec);
 		xRotateMatrix = glm::rotate(rotationVec[0], glm::vec3(1,0,0));
         yRotateMatrix = glm::rotate(rotationVec[1],glm::vec3(0,1,0));
@@ -129,18 +134,18 @@ void runProgram(GLFWwindow* window)
         glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
 		
         // Draw scene
-		for (int i = 0; i <= 4; i++) {
+		for (int i = 0; i < 5; i++) {
 			float timeoffset = time + 1.5*i;
-			updateSceneNode(nodes[i], glm::mat4(1.0f), timeoffset, doorToggle);
+			updateSceneNode(nodes[i], glm::mat4(1.0f), timeoffset);
 			drawSceneNode(nodes[i], MVPmatrix, &shader);
 		}
        
         // Handle other events
         glfwPollEvents();
         handleKeyboardInput(window);
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS){
-            doorToggle = true;
-        }
+		if ((glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) && !openDoor) {
+			openDoor = true;
+		}
 
         // Flip buffers
         glfwSwapBuffers(window);
@@ -360,26 +365,25 @@ void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shade
 }
 
 
-void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time, bool door) {
-	int ID = node->vertexArrayObjectID;
+void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time) {
+	unsigned int ID = node->vertexArrayObjectID;
 
-    // ID for bodies
-	if (ID > 5 && (ID % 5 == 2)) {
+    // bodies
+	if (ID > OFFSET_ID && (ID % OFFSET_ID == BODY_ID)) {
 		Heading heading = simpleHeadingAnimation(time);
 		node->position = glm::vec3(heading.x, 0, heading.z);
 		node->rotation = glm::vec3(heading.pitch, heading.yaw, heading.roll);
 	}
-    // ID for main rotors
-	if (ID > 5 && (ID % 5 == 3)) {
-        node->rotation.y = time*300;
+    // main rotors
+	if (ID > OFFSET_ID && (ID % OFFSET_ID == MAIN_ROTOR_ID)) {
+        node->rotation.y = time*ROTOR_SPEED;
 	}
-    // ID for tail rotors
-    if (ID > 5 && (ID % 5 == 4) ) {
-        node->rotation.x = time*300;
+    // tail rotors
+    if (ID > OFFSET_ID && (ID % OFFSET_ID == TAIL_ROTOR_ID) ) {
+        node->rotation.x = time*ROTOR_SPEED;
 	}
-    
     // open door
-    if((door) && (ID % 5 == 0) && (ID != 0) && ((node->position.z) < 1)){
+    if((openDoor) && (ID > 0) && (ID % OFFSET_ID == DOOR_ID) && ((node->position.z) < 2)){
         node->position.z+=0.01;
     }
 	
@@ -393,6 +397,6 @@ void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float tim
 		glm::translate(-node->referencePoint);
 
 	for (SceneNode* child : node->children) {
-		updateSceneNode(child, node->currentTransformationMatrix, time, door);
+		updateSceneNode(child, node->currentTransformationMatrix, time);
 	}
 }
