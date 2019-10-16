@@ -1,30 +1,19 @@
 #version 430 core
 
-in vec3 position;
-in vec4 color;
+layout(location=0) in vec3 position;
+layout(location=1) in vec4 color;
+layout(location=2) in vec3 normal;
 
-out layout(location=0) vec4 colorV;
+layout(location=1) out vec4 colorV;
+layout(location=2) out vec3 normalV;
 
-uniform mat4x4 MVPmatrix;
-uniform float scaler;
+uniform mat4x4 viewMatrix;
+uniform mat4x4 modelMatrix;
 
 void main()
 {
-    mat4x4 matrix = mat4(1);
-    //a 
-    //matrix [0][0] = scaler;
-    //b
-    //matrix [0][1] = scaler; 
-    //c
-    //matrix [0][3] = scaler;
-    //d
-    //matrix [1][0] = scaler;
-    //e
-    //matrix [1][1] = scaler;
-    //f
-    //matrix [1][3] = scaler;
-
     colorV = color;
-    //gl_Position = matrix * vec4(position.x, position.y, position.z, 1.0f);
-    gl_Position = MVPmatrix * vec4(position.x, position.y, position.z, 1.0f);
+    normalV = normalize(mat3(modelMatrix) * normal);
+
+    gl_Position = viewMatrix*modelMatrix*vec4(position.x, position.y, position.z, 1.0f);
 }

@@ -2,6 +2,9 @@
 #include "program.hpp"
 #include "gloom/shader.hpp"
 #include "gloom/gloom.hpp"
+#include "OBJLoader.hpp"
+#include "sceneGraph.hpp"
+#include "toolbox.hpp"
 #include "math.h"
 #include <iostream>
 #include <glm/mat4x4.hpp>
@@ -9,6 +12,15 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/vec3.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+// definitions for helicopter parts. Works for a graph of one terrain and an arbitrary number of equal meshes
+const unsigned int OFFSET_ID = 5;
+const unsigned int BODY_ID = 2;
+const unsigned int MAIN_ROTOR_ID = 3;
+const unsigned int TAIL_ROTOR_ID = 4;
+const unsigned int DOOR_ID = 0;
+const int ROTOR_SPEED = 300;
+bool openDoor = false;
 
 // current motion and rotation vectors
 glm::vec3 motionVec = glm::vec3(0.0f,0.0f,-1.0f);
@@ -33,60 +45,74 @@ void runProgram(GLFWwindow* window)
     glClearColor(0.3f, 0.5f, 0.8f, 1.0f);
 
     // Set up your scene here (create Vertex Array Objects, etc.)
-    std::vector<float> coordinateVec2 = {
-        -0.8, -0.8, 0.0,    -0.4, -0.8, 0.0,    0.8, -0.4, 0.0, 
-         0.8, 0.8, 0.0,      0.4, 0.8, 0.0,     0.8, 0.4, 0.0, 
-         0.0, 0.0, 0.0,      1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
-        -1.0, 1.0, 0.0,     -1.0, 0.0, 0.0,     0.0, 1.0, 0.0,
-         0.0, 0.0, 0.0,     -1.0, 0.0, 0.0,     0.0, -1.0, 0.0,
-    };
+    // Terrain
+    Mesh terrainMesh = loadTerrainMesh("../gloom/resources/lunarsurface.obj");
+
+    std::vector<float> vertexVecTerr = terrainMesh.vertices;
+    std::vector<float> colorVecTerr = terrainMesh.colours;
+    std::vector<float> normalVecTerr = terrainMesh.normals;
+    std::vector<unsigned int> indexVecTerr = terrainMesh.indices;
+
+    int indexTerr = setUpVAOtriangle(vertexVecTerr, colorVecTerr, normalVecTerr, indexVecTerr);
+
+    // Helicopter
+    Helicopter heliObj = loadHelicopterModel("../gloom/resources/helicopter.obj");   
+
+    Mesh body = heliObj.body;
+    Mesh mainRotor = heliObj.mainRotor;
+    Mesh tailRotor = heliObj.tailRotor;
+    Mesh door = heliObj.door;
+
+    std::vector<float> vertexVecBody = body.vertices;
+    std::vector<float> colorVecBody = body.colours;
+    std::vector<float> normalVecBody = body.normals;
+    std::vector<unsigned int> indexVecBody = body.indices;
+    int indexBody = setUpVAOtriangle(vertexVecBody, colorVecBody, normalVecBody, indexVecBody);
+
+    std::vector<float> vertexVecMainRotor = mainRotor.vertices;
+    std::vector<float> colorVecMainRotor = mainRotor.colours;
+    std::vector<float> normalVecMainRotor = mainRotor.normals;
+    std::vector<unsigned int> indexVecMainRotor = mainRotor.indices;
+    int indexMainRotor = setUpVAOtriangle(vertexVecMainRotor, colorVecMainRotor, normalVecMainRotor, indexVecMainRotor);
+
     
-    std::vector<unsigned int> indexVec2 = 
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+    std::vector<float> vertexVecTailRotor = tailRotor.vertices;
+    std::vector<float> colorVecTailRotor = tailRotor.colours;
+    std::vector<float> normalVecTailRotor = tailRotor.normals;
+    std::vector<unsigned int> indexVecTailRotor = tailRotor.indices;
+    int indexTailRotor = setUpVAOtriangle(vertexVecTailRotor, colorVecTailRotor, normalVecTailRotor, indexVecTailRotor);
 
-    std::vector<float> colorVec2 = {
-        1.0, 0.9, 1.0, 0.6,     0.1, 0.1, 0.1, 0.6,      1.0, 1.0, 0.0, 0.6,
-        0.7, 0.6, 1.0, 0.4,     1.0, 1.0, 1.0, 0.4,      1.0, 0.0, 0.6, 0.4,
-        1.0, 0.4, 1.0, 0.5,     0.6, 0.4, 1.0, 0.9,      0.7, 0.4, 1.0, 0.5,
-        0.7, 0.4, 0.0, 0.9,     1.0, 0.9, 0.3, 0.8,      1.0, 0.4, 0.3, 0.9,
-        0.6, 0.4, 1.0, 0.8,     0.1, 0.1, 0.1, 0.6,      0.0, 0.4, 0.6, 0.8,
-    };
-
-    std::vector<float> coordinateVec = {
-         0.0, 0.0, -0.0,      1.0, 0.0, -0.0,     0.0, 1.0, -0.0,
-        -0.8, -0.8, -0.5,     0.8, -0.8, -0.5,    0.0, 0.8, -0.5, 
-         0.8, 0.8, 0.5,      -0.8, 0.8, 0.5,      0.8, -0.8, 0.5, 
-    };
+    std::vector<float> vertexVecDoor = body.vertices;
+    std::vector<float> colorVecDoor = body.colours;
+    std::vector<float> normalVecDoor = body.normals;
+    std::vector<unsigned int> indexVecDoor = body.indices;
+    int indexDoor = setUpVAOtriangle(vertexVecDoor, colorVecDoor, normalVecDoor, indexVecDoor);
     
-    std::vector<unsigned int> indexVecOld = 
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, };
-
-    std::vector<unsigned int> indexVec = 
-    {6,7,8,3,4,5,0,1,2};
-
-    std::vector<float> colorVec = {
-        0.0, 1.0, 0.0, 0.3,     0.0, 1.0, 0.0, 0.3,      0.0, 1.0, 0.0, 0.3,
-        0.0, 0.0, 1.0, 0.3,     0.0, 0.0, 1.0, 0.3,      0.0, 0.0, 1.0, 0.3,
-        1.0, 0.0, 0.0, 0.3,     1.0, 0.0, 0.0, 0.3,      1.0, 0.0, 0.0, 0.3,
-    };
-
-    int index = setUpVAOtriangle(coordinateVec, indexVec, colorVec);
-
     // transformation matrices
-    glm::mat4x4 MVPmatrix = glm::mat4(1.0f); 
-    glm::mat4x4 perspMatrix = glm::perspective(2.0, 4.0 / 3.0, 1.0, 100.0);
+    glm::mat4 MVPmatrix = glm::mat4(1.0f); 
+    glm::mat4x4 perspMatrix = glm::perspective(3.14/2.0, 4.0 / 3.0, 1.0, 1000.0);
     glm::mat4x4 modelMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,-1.0f));
     glm::mat4x4 viewMatrix = glm::mat4(1.0f); 
     glm::mat4x4 xRotateMatrix = glm::mat4(1.0f); 
     glm::mat4x4 yRotateMatrix = glm::mat4(1.0f); 
-    
-    // transformation scaling helper 
-    float scaler = 0;
+
+	SceneNode* root1 = createSceneGraph();
+	SceneNode* root2 = createSceneGraph();
+	SceneNode* root3 = createSceneGraph();
+	SceneNode* root4 = createSceneGraph();
+	SceneNode* root5 = createSceneGraph();
+
+	SceneNode* nodes[5] = { root1, root2, root3, root4, root5 };
+	float deltaTime = 0;
+	float time = 0;
 
     // Rendering Loop
     shader.activate();
     while (!glfwWindowShouldClose(window))
     {
+		deltaTime = getTimeDeltaSeconds();
+		time += deltaTime*0.01;
+
         // Clear colour and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -95,31 +121,31 @@ void runProgram(GLFWwindow* window)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Draw your scene here
-        
         printGLError();
-
-        // translation scaling helper 
-        int scalerLocation = glGetUniformLocation(shader.get(), "scaler");
-        scaler += 0.1;
-        glUniform1f(scalerLocation, sin(scaler));
 
         // MVP
         viewMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0,-1.0));
-        modelMatrix = glm::translate(glm::mat4(1.0f), motionVec);
+		modelMatrix = glm::translate(glm::mat4(1.0f), motionVec);
+		xRotateMatrix = glm::rotate(rotationVec[0], glm::vec3(1,0,0));
         yRotateMatrix = glm::rotate(rotationVec[1],glm::vec3(0,1,0));
-        xRotateMatrix = glm::rotate(rotationVec[0],glm::vec3(1,0,0));
-        MVPmatrix = perspMatrix*yRotateMatrix*xRotateMatrix*viewMatrix*modelMatrix;
-
-        int MVPlocation = glGetUniformLocation(shader.get(), "MVPmatrix");
-        glUniformMatrix4fv(MVPlocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
-
+        MVPmatrix = perspMatrix*xRotateMatrix*yRotateMatrix*viewMatrix*modelMatrix;
+        
+        int viewLocation = glGetUniformLocation(shader.get(), "viewMatrix");
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(MVPmatrix));
+		
         // Draw scene
-        glBindVertexArray(index);
-        glDrawElements(GL_TRIANGLES, indexVec.size(), GL_UNSIGNED_INT, 0);
+		for (int i = 0; i < 5; i++) {
+			float timeoffset = time + 1.5*i;
+			updateSceneNode(nodes[i], glm::mat4(1.0f), timeoffset);
+			drawSceneNode(nodes[i], MVPmatrix, &shader);
+		}
        
         // Handle other events
         glfwPollEvents();
         handleKeyboardInput(window);
+		if ((glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) && !openDoor) {
+			openDoor = true;
+		}
 
         // Flip buffers
         glfwSwapBuffers(window);
@@ -146,17 +172,15 @@ void handleKeyboardInput(GLFWwindow* window)
 
         // up/down for pitch
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS){
-            if (rotationVec[0] < M_PI/2){
-                 rotationVec[0]+= speed;
+            if (rotationVec[0] < 3.14/2){
+                 rotationVec[0]-= speed;
             } 
         }
        
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS){
-            if (rotationVec[0] > -M_PI/2){
-                 rotationVec[0]-= speed;
+            if (rotationVec[0] > -3.14/2){
+                 rotationVec[0]+= speed;
             } 
-
-
         }
     }
 
@@ -164,7 +188,7 @@ void handleKeyboardInput(GLFWwindow* window)
         // for task 5 a
         glm::mat3x3 yRotateMatrix = glm::rotate(rotationVec[1],glm::vec3(0,1,0));
         glm::mat3x3 xRotateMatrix = glm::rotate(rotationVec[0],glm::vec3(1,0,0));
-        
+        speed = 0.5;
         // left/right for sideways translation
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS){
             glm::vec3 speedVec = glm::vec3(speed,0.0f,0.0f);
@@ -197,13 +221,15 @@ void handleKeyboardInput(GLFWwindow* window)
             glm::vec3 speedVec = glm::vec3(0.0f,0.0f,speed);
             motionVec-= speedVec*yRotateMatrix*xRotateMatrix;
         }
+
     }
 }
 
 
-int setUpVAOtriangle(std::vector<float> vertexCoordinates, 
-                     std::vector<unsigned int> indexArray,
-                     std::vector<float> colorArray)
+int setUpVAOtriangle(std::vector<float> vertexVec, 
+                     std::vector<float> colorVec,
+                     std::vector<float> normalVec,
+                     std::vector<unsigned int> indexVec)
 {
     // setup array
     unsigned int arrayID = 0;
@@ -214,7 +240,7 @@ int setUpVAOtriangle(std::vector<float> vertexCoordinates,
     unsigned int vertexBufferID = 0;
     glGenBuffers(1, &vertexBufferID);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferID);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertexCoordinates.size(), vertexCoordinates.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertexVec.size(), vertexVec.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE,0,0); 
     glEnableVertexAttribArray(0);
 
@@ -222,15 +248,155 @@ int setUpVAOtriangle(std::vector<float> vertexCoordinates,
     unsigned int indexBufferID = 1;
     glGenBuffers(1, &indexBufferID);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferID);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indexArray.size(), indexArray.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int)*indexVec.size(), indexVec.data(), GL_STATIC_DRAW);
     
     // color buffer
     unsigned int colorBufferID = 2;
     glGenBuffers(1, &colorBufferID);
     glBindBuffer(GL_ARRAY_BUFFER, colorBufferID);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*colorArray.size(), colorArray.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*colorVec.size(), colorVec.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(1, 4, GL_FLOAT,GL_FALSE,0,0); 
     glEnableVertexAttribArray(1);
 
+    // normal buffer
+    unsigned int normalBufferID = 3;
+    glGenBuffers(1, &normalBufferID);
+    glBindBuffer(GL_ARRAY_BUFFER, normalBufferID);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*normalVec.size(), normalVec.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 3, GL_FLOAT,GL_FALSE,0,0); 
+    glEnableVertexAttribArray(2);
+    
     return arrayID;
+}
+
+SceneNode* createSceneGraph(){
+    // Terrain
+    Mesh terrainMesh = loadTerrainMesh("../gloom/resources/lunarsurface.obj");
+
+    std::vector<float> vertexVecTerr = terrainMesh.vertices;
+    std::vector<float> colorVecTerr = terrainMesh.colours;
+    std::vector<float> normalVecTerr = terrainMesh.normals;
+    std::vector<unsigned int> indexVecTerr = terrainMesh.indices;
+    int indexTerr = setUpVAOtriangle(vertexVecTerr, colorVecTerr, normalVecTerr, indexVecTerr);
+
+    // Helicopter
+    Helicopter heliObj = loadHelicopterModel("../gloom/resources/helicopter.obj");   
+
+    Mesh body = heliObj.body;
+    Mesh mainRotor = heliObj.mainRotor;
+    Mesh tailRotor = heliObj.tailRotor;
+    Mesh door = heliObj.door;
+
+    std::vector<float> vertexVecBody = body.vertices;
+    std::vector<float> colorVecBody = body.colours;
+    std::vector<float> normalVecBody = body.normals;
+    std::vector<unsigned int> indexVecBody = body.indices;
+    int indexBody = setUpVAOtriangle(vertexVecBody, colorVecBody, normalVecBody, indexVecBody);
+
+    std::vector<float> vertexVecMainRotor = mainRotor.vertices;
+    std::vector<float> colorVecMainRotor = mainRotor.colours;
+    std::vector<float> normalVecMainRotor = mainRotor.normals;
+    std::vector<unsigned int> indexVecMainRotor = mainRotor.indices;
+    int indexMainRotor = setUpVAOtriangle(vertexVecMainRotor, colorVecMainRotor, normalVecMainRotor, indexVecMainRotor);
+    
+    std::vector<float> vertexVecTailRotor = tailRotor.vertices;
+    std::vector<float> colorVecTailRotor = tailRotor.colours;
+    std::vector<float> normalVecTailRotor = tailRotor.normals;
+    std::vector<unsigned int> indexVecTailRotor = tailRotor.indices;
+    int indexTailRotor = setUpVAOtriangle(vertexVecTailRotor, colorVecTailRotor, normalVecTailRotor, indexVecTailRotor);
+
+    std::vector<float> vertexVecDoor = door.vertices;
+    std::vector<float> colorVecDoor = door.colours;
+    std::vector<float> normalVecDoor = door.normals;
+    std::vector<unsigned int> indexVecDoor = door.indices;
+    int indexDoor = setUpVAOtriangle(vertexVecDoor, colorVecDoor, normalVecDoor, indexVecDoor);
+
+    // Nodes
+    SceneNode* terrNode = createSceneNode();
+    terrNode->vertexArrayObjectID = indexTerr;
+    terrNode->VAOIndexCount = indexVecTerr.size();
+    terrNode->referencePoint = glm::vec3(0,0,0);
+
+    SceneNode* bodyNode = createSceneNode();
+    bodyNode->vertexArrayObjectID = indexBody;
+    bodyNode->VAOIndexCount = indexVecBody.size();
+    bodyNode->referencePoint = glm::vec3(0,0,0);
+
+    SceneNode* mainRotorNode = createSceneNode();
+    mainRotorNode->vertexArrayObjectID = indexMainRotor;
+    mainRotorNode->VAOIndexCount = indexVecMainRotor.size();
+    mainRotorNode->referencePoint = glm::vec3(0.0,0.0,0);
+
+    SceneNode* tailRotorNode = createSceneNode();
+    tailRotorNode->vertexArrayObjectID = indexTailRotor;
+    tailRotorNode->VAOIndexCount = indexVecTailRotor.size();
+    tailRotorNode->referencePoint = glm::vec3(0.35, 2.3, 10.4);
+
+    SceneNode* doorNode = createSceneNode();
+    doorNode->vertexArrayObjectID = indexDoor;
+    doorNode->VAOIndexCount = indexVecDoor.size();
+    doorNode->referencePoint = glm::vec3(0,0,0);
+
+    SceneNode* rootNode = createSceneNode();
+
+    addChild(rootNode,terrNode);
+    addChild(terrNode,bodyNode);
+    addChild(bodyNode,mainRotorNode);
+    addChild(bodyNode,tailRotorNode);
+    addChild(bodyNode,doorNode);
+
+    return rootNode;
+}
+
+void drawSceneNode(SceneNode* root, glm::mat4 viewProjectionMatrix, Gloom::Shader* shader) {
+
+    int vaoID = root->vertexArrayObjectID;
+
+    if (vaoID > -1) {
+        int location = glGetUniformLocation(shader->get(), "modelMatrix");
+        glBindVertexArray(vaoID);
+        glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(root->currentTransformationMatrix)); 
+        glDrawElements(GL_TRIANGLES, root->VAOIndexCount, GL_UNSIGNED_INT, nullptr);
+    }
+
+    for(SceneNode* child: root->children) {
+        drawSceneNode(child, viewProjectionMatrix, shader);
+    }
+}
+
+
+void updateSceneNode(SceneNode* node, glm::mat4 transformationThusFar, float time) {
+	unsigned int ID = node->vertexArrayObjectID;
+
+    // bodies
+	if (ID > OFFSET_ID && (ID % OFFSET_ID == BODY_ID)) {
+		Heading heading = simpleHeadingAnimation(time);
+		node->position = glm::vec3(heading.x, 0, heading.z);
+		node->rotation = glm::vec3(heading.pitch, heading.yaw, heading.roll);
+	}
+    // main rotors
+	if (ID > OFFSET_ID && (ID % OFFSET_ID == MAIN_ROTOR_ID)) {
+        node->rotation.y = time*ROTOR_SPEED;
+	}
+    // tail rotors
+    if (ID > OFFSET_ID && (ID % OFFSET_ID == TAIL_ROTOR_ID) ) {
+        node->rotation.x = time*ROTOR_SPEED;
+	}
+    // open door
+    if((openDoor) && (ID > 0) && (ID % OFFSET_ID == DOOR_ID) && ((node->position.z) < 2)){
+        node->position.z+=0.01;
+    }
+	
+	node->currentTransformationMatrix =
+		transformationThusFar*
+		glm::translate(node->position) *
+		glm::translate(node->referencePoint) *
+		glm::rotate(node->rotation.x, glm::vec3(1, 0, 0)) *
+		glm::rotate(node->rotation.y, glm::vec3(0, 1, 0)) *
+		glm::rotate(node->rotation.z, glm::vec3(0, 0, 1)) *
+		glm::translate(-node->referencePoint);
+
+	for (SceneNode* child : node->children) {
+		updateSceneNode(child, node->currentTransformationMatrix, time);
+	}
 }
