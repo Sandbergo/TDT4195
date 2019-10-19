@@ -14,17 +14,19 @@ def convolve_im(im, kernel):
     Returns:
         [type]: [np.array of shape [H, W, 3]. should be same as im]
     """
-    kernel = np.flipud(np.fliplr(kernel))    # Flip the kernel
-    output = np.zeros_like(image)            # convolution output
-    # Add zero padding to the input image
-    image_padded = np.zeros((image.shape[0] + 2, image.shape[1] + 2))   
-    image_padded[1:-1, 1:-1] = image
-    for x in range(image.shape[1]):     # Loop over every pixel of the image
-        for y in range(image.shape[0]):
-            # element-wise multiplication of the kernel and the image
-            output[y,x]=(kernel*image_padded[y:y+3,x:x+3]).sum()        
+    offset = kernel.shape[0] // 2  
+    kernel = np.flipud(np.fliplr(kernel))  
+    
+    for i in range(im.shape[2]-1):
 
-    return output
+        im_padded = np.zeros((im.shape[0] + 2*offset, im.shape[1] + 2*offset))   
+        im_padded[offset:-offset, offset:-offset] = im[...,i]
+        
+        for x in range(im.shape[1]):    
+            for y in range(im.shape[0]):
+                im[y,x,i]=(kernel*im_padded[y:y+2*offset+1,x:x+2*offset+1]).sum()        
+
+    return im
 
 
 if __name__ == "__main__":
@@ -43,7 +45,7 @@ if __name__ == "__main__":
     ]) / 256
     # Convolve images
     smoothed_im1 = convolve_im(im.copy(), h_a)
-    smoothed_im2 = convolve_im(im, h_b)
+    smoothed_im2 = convolve_im(im.copy(), h_b)
 
     # DO NOT CHANGE
     assert isinstance(smoothed_im1, np.ndarray), \
