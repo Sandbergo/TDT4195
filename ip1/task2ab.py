@@ -19,7 +19,6 @@ def greyscale(im):
     Returns:
         im ([type]): [np.array of shape [H, W]]
     """
-    # YOUR CODE HERE
     return np.dot(im[..., :3], [0.212, 0.7152, 0.0722])
 
 
@@ -32,8 +31,7 @@ def inverse(im):
     Returns:
         im ([type]): [np.array of shape [H, W]]
     """    
-     # YOUR CODE HERE
-    return im
+    return np.subtract(255.0, im)
 
 
 if __name__ == "__main__":
@@ -41,4 +39,4 @@ if __name__ == "__main__":
     im = greyscale(im)
     inverse_im = inverse(im)
     save_im("lake_greyscale.jpg", im, cmap="gray")
-    save_im("lake_inverse.jpg", inverse_im, cmap="gray")
+    save_im("lake_inverse2.jpg", inverse_im, cmap="gray")
