@@ -15,16 +15,20 @@ def MaxPool2d(im: np.array,
         im: [np.array of shape [H/kernel_size, W/kernel_size, 3]].
     """
     stride = kernel_size
-    ### START YOUR CODE HERE ### (You can change anything inside this block) 
-
-
+    new_im = np.zeros((im.shape[0]//kernel_size, im.shape[1]//kernel_size, im.shape[2]))
+    
+    for y in range(new_im.shape[0]):
+        for x in range(new_im.shape[1]):
+            for i in range(new_im.shape[2]):
+                new_im[y, x, i] = im[y*stride:(y+1)*stride, x*stride:(x+1)*stride, i].max()
 
     return new_im
-    ### END YOUR CODE HERE ### 
+    
+
+
 
 
 if __name__ == "__main__":
-
     # DO NOT CHANGE
     im = skimage.data.chelsea()
     im = utils.uint8_to_float(im)
