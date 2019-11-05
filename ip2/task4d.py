@@ -2,6 +2,7 @@ import numpy as np
 import skimage
 import utils
 from task4b import convolve_im
+import matplotlib.pyplot as plt
 
 
 def sharpen(im: np.array):
@@ -18,7 +19,10 @@ def sharpen(im: np.array):
         [0, -1, 0]
     ])
     ### START YOUR CODE HERE ### (You can change anything inside this block)
-    im = convolve_im(im, laplacian)
+    im_conv = convolve_im(im, laplacian)
+    im = im+im_conv
+
+    plt.show()
     ### END YOUR CODE HERE ###
     return im
 
@@ -34,4 +38,4 @@ if __name__ == "__main__":
     # Concatenate the image, such that we get
     # the original on the left side, and the sharpened on the right side
     im = np.concatenate((im, sharpen_im), axis=1)
-    utils.save_im("moon_sharpened.png", im)
+    utils.save_im("moon_sharpened3.png", im)

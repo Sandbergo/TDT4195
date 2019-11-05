@@ -32,17 +32,31 @@ def convolve_im(im: np.array,
     #fft_kernel = np.fft.fft2(kernel)
     fft_kernel = fftpack.fft2(kernel, shape=im.shape[:2], axes=(0, 1))
     fft_conv = fft_im * fft_kernel
-    conv_result = np.abs(np.fft.ifft2(fft_conv))
+    conv_result = np.real(np.fft.ifft2(fft_conv))
 
     if verbose:
         # Use plt.subplot to place two or more images beside eachother
         plt.figure(figsize=(20, 4))
         # plt.subplot(num_rows, num_cols, position (1-indexed))
-        plt.subplot(1, 3, 1)
-        plt.imshow(np.abs(np.fft.fftshift(fft_im)), cmap="gray")
-        plt.subplot(1, 3, 2)
-        plt.imshow(np.abs(np.fft.fftshift(fft_conv)), cmap="gray")
-        plt.subplot(1, 3, 3)
+        
+        plt.subplot(1, 5, 1)
+        plt.title("Image")
+        plt.imshow(im, cmap="gray")
+
+        plt.subplot(1, 5, 2)
+        plt.title("FT of image")
+        plt.imshow(np.log(np.abs(np.fft.fftshift(fft_im))), cmap="gray")
+
+        plt.subplot(1, 5, 3)
+        plt.title("FT of kernel")
+        plt.imshow(np.abs(np.fft.fftshift(fft_kernel)), cmap="gray")
+
+        plt.subplot(1, 5, 4)
+        plt.title("FT of convolved image")
+        plt.imshow(np.log(np.abs(np.fft.fftshift(fft_conv))), cmap="gray")
+
+        plt.subplot(1, 5, 5)
+        plt.title("Convolved Image")
         plt.imshow(conv_result, cmap="gray")
     ### END YOUR CODE HERE ###
     return conv_result
