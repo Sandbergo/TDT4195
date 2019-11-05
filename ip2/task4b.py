@@ -29,7 +29,6 @@ def convolve_im(im: np.array,
 
     conv_result = im
     fft_im = np.fft.fft2(im)
-    #fft_kernel = np.fft.fft2(kernel)
     fft_kernel = fftpack.fft2(kernel, shape=im.shape[:2], axes=(0, 1))
     fft_conv = fft_im * fft_kernel
     conv_result = np.real(np.fft.ifft2(fft_conv))

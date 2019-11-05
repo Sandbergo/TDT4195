@@ -43,7 +43,7 @@ def convolve_im(im: np.array,
 
         plt.subplot(1, 5, 3)
         plt.title("FT of kernel")
-        plt.imshow(np.abs(np.fft.fftshift(fft_kernel)), cmap="gray")
+        plt.imshow(np.log(np.abs(np.fft.fftshift(fft_kernel))), cmap="gray")
 
         plt.subplot(1, 5, 4)
         plt.title("FT of convolved image")
