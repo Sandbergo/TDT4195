@@ -1,6 +1,18 @@
 import utils
 import numpy as np
 
+def get8n(x, y, shape):
+    out = lambda x_out, y_out : [(x2, y2) for x2 in range(x-1, x+2)
+                               for y2 in range(y-1, y+2)
+                               if (-1 < x <= shape[0] and
+                                   -1 < y <= shape[1] and
+                                   (x != x2 or y != y2) and
+                                   (0 <= x2 <= shape[0]) and
+                                   (0 <= y2 <= shape[1]))]
+    print(out)
+    return out
+
+
 
 def region_growing(im: np.ndarray, seed_points: list, T: int) -> np.ndarray:
     """
@@ -19,10 +31,35 @@ def region_growing(im: np.ndarray, seed_points: list, T: int) -> np.ndarray:
     """
     ### START YOUR CODE HERE ### (You can change anything inside this block)
     # You can also define other helper functions
+
     segmented = np.zeros_like(im).astype(bool)
-    for row, col in seed_points:
-        segmented[row, col] = True
+    x_max, y_max  = segmented.shape
+
+    # https://stackoverflow.com/questions/1620940/determining-neighbours-of-cell-two-dimensional-list
+    moore = lambda x, y : [(x_n, y_n) for x_n in range(x-1, x+2)
+                                for y_n in range(y-1, y+2)
+                                if (-1 < x < x_max and
+                                    -1 < y < y_max and
+                                    (x != x_n or y != y_n) and
+                                    (0 <= x_n < x_max) and
+                                    (0 <= y_n < y_max))]
+    
+
+    processed = []
+    while(len(seed_points)> 0):
+        (row, col) = seed_points[0]
+        segmented[row, col] = True 
+      
+        neighbours = moore(row, col)
+        for row_n, col_n in neighbours:
+            if im[row_n, col_n] > (np.max(im)-T):
+                segmented[row_n, col_n] = True
+                if not (row_n, col_n) in processed:
+                    seed_points.append((row_n, col_n))
+                processed.append((row_n, col_n))
+        seed_points.pop(0)
     return segmented
+
     ### END YOUR CODE HERE ### 
 
 
@@ -37,6 +74,8 @@ if __name__ == "__main__":
         [233, 436], # Seed point 3
         [232, 417], # Seed point 4
     ]
+
+
     intensity_threshold = 50
     segmented_image = region_growing(im, seed_points, intensity_threshold)
 

@@ -19,6 +19,31 @@ def otsu_thresholding(im: np.ndarray) -> int:
     # You can also define other helper functions
     # Compute normalized histogram
     threshold = 128
+    num_bins = 256
+    histogram, bins = np.histogram(a = im, bins = num_bins)
+    total_vals = np.sum(histogram)
+
+    for i in range(1,len(bins)):      
+        prob_1 = np.sum(histogram[:i])/total_vals
+        prob_2 = np.sum(histogram[i:])/total_vals
+
+        mean_1 = np.sum(histogram[:i] * bins[:i])/np.sum(histogram[:i])
+        mean_2 = np.sum(histogram[i:] * bins[i:-1] )/np.sum(histogram[i:])
+        
+        var_1 = np.sum(((bins[:i] - mean_1)**2 ) * histogram[:i])/np.sum(histogram[:i])
+        var_2 = np.sum(((bins[i:-1] - mean_2)**2 ) * histogram[i:])/np.sum(histogram[i:])
+
+        var_tot = (prob_1 * var_1) + (prob_2 * var_2)
+
+        if i == 1:
+            var_tot_max = var_tot
+            threshold = i
+
+        if var_tot < var_tot_max:
+            var_tot_max = var_tot
+            threshold = i
+
+
     return threshold
     ### END YOUR CODE HERE ### 
 
