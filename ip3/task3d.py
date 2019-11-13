@@ -25,7 +25,16 @@ def fill_holes(im: np.ndarray, starting_points: list, num_iterations: int) -> np
         [1, 1, 1],
         [1, 1, 1]
     ], dtype=bool)
-    result = im.copy()
+    
+    result = np.zeros_like(im).astype(np.int32)
+    complement = np.invert(im)
+    for row, col in starting_points:   
+        result[row, col] = True
+    for k in range(0, num_iterations):
+        dilated = skimage.morphology.binary_dilation(image = result, selem= structuring_element)
+        result = np.logical_and(dilated, complement)
+    result = np.logical_or(result, im)
+
     return result
     ### END YOUR CODE HERE ### 
 

@@ -22,7 +22,16 @@ def distance_transform(im: np.ndarray) -> np.ndarray:
         [1, 1, 1],
         [1, 1, 1]
     ], dtype=bool)
-    result = im.astype(np.int32)
+    
+
+    result = np.zeros_like(im).astype(np.int32)
+
+    for i in range(0,256):
+        eroded_im = skimage.morphology.binary_erosion(image = im, selem= structuring_element)
+        diff_im = np.logical_xor(im, eroded_im)
+        result += diff_im * i
+        im = eroded_im
+
     return result
     ### END YOUR CODE HERE ### 
 

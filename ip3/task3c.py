@@ -21,6 +21,10 @@ def extract_boundary(im: np.ndarray) -> np.ndarray:
         [1, 1, 1]
     ], dtype=bool)
     boundary = im
+
+    eroded_im = skimage.morphology.binary_erosion(image = im, selem= structuring_element)
+    boundary = np.logical_xor(im, eroded_im)
+
     return boundary
     ### END YOUR CODE HERE ### 
 
