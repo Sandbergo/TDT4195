@@ -35,6 +35,7 @@ def region_growing(im: np.ndarray, seed_points: list, T: int) -> np.ndarray:
     segmented = np.zeros_like(im).astype(bool)
     x_max, y_max  = segmented.shape
 
+    # for this function I was inspired by:
     # https://stackoverflow.com/questions/1620940/determining-neighbours-of-cell-two-dimensional-list
     moore = lambda x, y : [(x_n, y_n) for x_n in range(x-1, x+2)
                                 for y_n in range(y-1, y+2)
@@ -44,20 +45,30 @@ def region_growing(im: np.ndarray, seed_points: list, T: int) -> np.ndarray:
                                     (0 <= x_n < x_max) and
                                     (0 <= y_n < y_max))]
     
-
     processed = []
-    while(len(seed_points)> 0):
-        (row, col) = seed_points[0]
-        segmented[row, col] = True 
-      
-        neighbours = moore(row, col)
-        for row_n, col_n in neighbours:
-            if im[row_n, col_n] > (np.max(im)-T):
-                segmented[row_n, col_n] = True
-                if not (row_n, col_n) in processed:
-                    seed_points.append((row_n, col_n))
-                processed.append((row_n, col_n))
-        seed_points.pop(0)
+    # for each seed point
+    for k in range(0, len(seed_points)):
+
+        active = [seed_points[k]]
+        row_s, col_s = seed_points[k]
+        seed_val = im[row_s, col_s]
+
+        # for each point in a neighbourhood of the seed point
+        while(len(active)> 0):
+
+            (row, col) = active[0]
+            segmented[row, col] = True 
+            neighbours = moore(row, col)
+
+            # for the neighbours of the active point
+            for row_n, col_n in neighbours:
+                if np.abs(int(im[row_n, col_n]) - int(seed_val))<T:
+                    segmented[row_n, col_n] = True
+                    if not (row_n, col_n) in processed:
+                        active.append((row_n, col_n))
+                    processed.append((row_n, col_n))
+            active.pop(0)
+                
     return segmented
 
     ### END YOUR CODE HERE ### 
@@ -87,5 +98,5 @@ if __name__ == "__main__":
             segmented_image.dtype)
 
     segmented_image = utils.to_uint8(segmented_image)
-    utils.save_im("defective-weld-segmented.png", segmented_image)
+    utils.save_im("defective-weld-segmented-test.png", segmented_image)
 
